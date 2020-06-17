@@ -91,19 +91,23 @@ def search():
         soup = BeautifulSoup(response.text, 'html.parser').find('ul', {'class': 'switch-block list-episode-item'})
         items = []
 
-        for episode in soup.find_all('li'):
-            path = episode.find('a').attrs['href']
-            info = cache.cacheFunction(drama_detail_info, path)
-            item = ListItem(info['video']['title'])
-            item.setArt({'poster': info['poster']})
-            item.setInfo('video', info['video'])
-            items.append((plugin.url_for_path(path), item, True))
+        if soup is not None:
+            for episode in soup.find_all('li'):
+                path = episode.find('a').attrs['href']
+                info = cache.cacheFunction(drama_detail_info, path)
+                item = ListItem(info['video']['title'])
+                item.setArt({'poster': info['poster']})
+                item.setInfo('video', info['video'])
+                items.append((plugin.url_for_path(path), item, True))
 
-        for page in soup.find_next_sibling().find_all_next('li', {'class': ['next', 'previous']}):
-            title = '[B]' + page.text + '[/B]'
-            path = '/search' + page.find('a').attrs['href']
-            item = ListItem(title)
-            items.append((plugin.url_for_path(path), item, True))
+            soup = soup.find_next_sibling()
+
+            if soup is not None:
+                for page in soup.find_all_next('li', {'class': ['next', 'previous']}):
+                    title = '[B]' + page.text + '[/B]'
+                    path = '/search' + page.find('a').attrs['href']
+                    item = ListItem(title)
+                    items.append((plugin.url_for_path(path), item, True))
 
         xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
     xbmcplugin.endOfDirectory(plugin.handle)
