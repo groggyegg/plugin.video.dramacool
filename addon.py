@@ -135,6 +135,9 @@ def kshow():
 
 @plugin.route('/drama-detail/<drama_id>')
 def drama_detail(drama_id):
+    info = cache.cacheFunction(drama_detail_info, '/drama-detail/' + drama_id)
+    xbmcplugin.setPluginCategory(plugin.handle, info['video']['title'])
+    xbmcplugin.setContent(plugin.handle, 'videos')
     response = requests.get(domain + '/drama-detail/' + drama_id)
 
     if response.status_code == 200:
@@ -143,11 +146,16 @@ def drama_detail(drama_id):
 
         for episode in soup.find_all('li'):
             title = '[' + episode.find('span').text + '] ' + episode.find('h3').text.replace('\n', '').strip()
+            info['video']['title'] = title
             path = '/episode-detail' + episode.find('a').attrs['href']
             item = ListItem(title)
+            item.setArt({'poster': info['poster']})
+            item.setInfo('video', info['video'])
+            item.setProperty('IsPlayable', 'true')
             items.append((plugin.url_for_path(path), item, False))
 
         xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
     xbmcplugin.endOfDirectory(plugin.handle)
 
 
@@ -215,7 +223,8 @@ def drama_detail_info(path):
                     'status': '' if status is None else status.find_next().text,
                     'year': '' if year is None else year.find_next().text,
                     'genre': '' if genre is None else [a.text for a in genre.find_next_siblings()],
-                    'aired': '' if aired is None else time.strftime('%Y-%m-%d', _strptime._strptime_time(aired.next_sibling.title(), ' %b %d, %Y'))}
+                    'aired': '' if aired is None else time.strftime('%Y-%m-%d', _strptime._strptime_time(aired.next_sibling.title(), ' %b %d, %Y')),
+                    'mediatype': 'video'}
 
             if info['status'] == 'Completed':
                 with open(path, 'wb') as writer:
