@@ -209,7 +209,7 @@ def drama_detail_info(path):
         if response.status_code == 200:
             details = BeautifulSoup(response.text, 'html.parser').find('div', {'class': 'info'})
             poster = details.find_previous().attrs['src']
-            title = details.find('h1').text
+            title = details.find('h1').text.strip()
             director = details.find('span', text='Director:')
             country = details.find('span', text='Country: ')
             status = details.find('span', text='Status:')
@@ -273,6 +273,7 @@ def category_drama(path, block_id):
                 for content in block.find_all('li'):
                     path = content.find('a').attrs['href']
                     info = cache.cacheFunction(drama_detail_info, path)
+                    info = drama_detail_info(path)
                     item = ListItem(info['video']['title'])
                     item.setArt({'poster': info['poster']})
                     item.setInfo('video', info['video'])
