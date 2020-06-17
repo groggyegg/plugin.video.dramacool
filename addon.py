@@ -160,8 +160,8 @@ def drama_detail(drama_id):
 
         for episode in soup.find_all('li'):
             title = '[' + episode.find('span').text + '] ' + episode.find('h3').text.replace('\n', '').strip()
-            info['video']['title'] = title
             path = '/episode-detail' + episode.find('a').attrs['href']
+            info['video']['title'] = title
             item = ListItem(title)
             item.setArt({'poster': info['poster']})
             item.setInfo('video', info['video'])
@@ -169,7 +169,6 @@ def drama_detail(drama_id):
             items.append((plugin.url_for_path(path), item, False))
 
         xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
-    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
     xbmcplugin.endOfDirectory(plugin.handle)
 
 
@@ -185,24 +184,21 @@ def episode_detail(episode_id):
     progress.update(25)
 
     if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser').find('div', {'class': 'block watch-drama'})
-        items = []
+        soup = BeautifulSoup(response.text, 'html.parser').find('div', {'class': 'block watch-drama'}).find('h1')
+        title = soup.text.strip()
+        links = soup.find_next_sibling('div', {'class': 'anime_muti_link'}).find_all('li')
         progress.update(50)
-
-        for server in soup.find('div', {'class': 'anime_muti_link'}).find_all('li'):
-            item = ListItem(server.next.title(), re.sub('^//', 'https://', server.attrs['data-video']))
-            items.append(item)
-
+        items = [ListItem(link.next.title(), path=re.sub('^//', 'https://', link.attrs['data-video'])) for link in links]
         position = Dialog().select('Choose Server', items)
         progress.update(75)
 
         if position != -1:
-            url = resolveurl.resolve(items[position].getLabel2())
+            url = resolveurl.resolve(items[position].getPath())
             progress.update(100)
 
             if url:
-                item = ListItem(soup.find('h1').text.strip())
-                xbmc.Player().play(url, item)
+                item = ListItem(title, path=url)
+                xbmcplugin.setResolvedUrl(plugin.handle, True, item)
             else:
                 Dialog().notification('Couldn\'t Resolve Server', '')
 
@@ -237,8 +233,7 @@ def drama_detail_info(path):
                     'status': '' if status is None else status.find_next().text,
                     'year': '' if year is None else year.find_next().text,
                     'genre': '' if genre is None else [a.text for a in genre.find_next_siblings()],
-                    'aired': '' if aired is None else time.strftime('%Y-%m-%d', _strptime._strptime_time(aired.next_sibling.title(), ' %b %d, %Y')),
-                    'mediatype': 'video'}
+                    'aired': '' if aired is None else time.strftime('%Y-%m-%d', _strptime._strptime_time(aired.next_sibling.title(), ' %b %d, %Y'))}
 
             if info['status'] == 'Completed':
                 with open(path, 'wb') as o:
