@@ -11,6 +11,7 @@ import pickle
 import re
 import resolveurl
 import requests
+import shutil
 import time
 import xbmc
 import xbmcplugin
@@ -19,15 +20,28 @@ cache = StorageServer('plugin.video.dramacool', 24)
 domain = 'https://www4.watchasian.to'
 plugin = Plugin()
 profile = xbmc.translatePath(Addon().getAddonInfo('profile'))
+profile_cache = os.path.join(profile, 'cache')
+profile_version = os.path.join(profile, 'version')
+version = (1, 4, 0)
 
 
 @plugin.route('/')
 def index():
-    if not os.path.exists(profile):
-        os.makedirs(profile)
+    if not os.path.exists(profile_version):
+        os.makedirs(profile_cache)
+
+        with open(profile_version, 'wb') as o:
+            pickle.dump(version, o, pickle.HIGHEST_PROTOCOL)
+    else:
+        with open(profile_version, 'rb+') as io:
+            if version > pickle.load(io):
+                io.seek(0)
+                pickle.dump(version, io, pickle.HIGHEST_PROTOCOL)
+                shutil.rmtree(profile_cache)
+                os.makedirs(profile_cache)
 
     xbmcplugin.setPluginCategory(plugin.handle, 'Categories')
-    xbmcplugin.setContent(plugin.handle, 'files')
+    xbmcplugin.setContent(plugin.handle, 'videos')
     items = [(plugin.url_for_path('/search?type=movies&page=1'), ListItem('Search'), True),
              (plugin.url_for_path('/recently-added?page=1'), ListItem('Recently Added Drama'), True),
              (plugin.url_for_path('/recently-added-movie?page=1'), ListItem('Recently Added Movie'), True),
@@ -198,11 +212,11 @@ def episode_detail(episode_id):
 
 def drama_detail_info(path):
     url = domain + path
-    path = profile + path.rsplit('/', 1)[1]
+    path = os.path.join(profile_cache, path.rsplit('/', 1)[1])
 
     if os.path.exists(path):
-        with open(path, 'rb') as reader:
-            return pickle.load(reader)
+        with open(path, 'rb') as i:
+            return pickle.load(i)
     else:
         response = requests.get(url)
 
@@ -227,8 +241,8 @@ def drama_detail_info(path):
                     'mediatype': 'video'}
 
             if info['status'] == 'Completed':
-                with open(path, 'wb') as writer:
-                    pickle.dump({'poster': poster, 'video': info}, writer, pickle.HIGHEST_PROTOCOL)
+                with open(path, 'wb') as o:
+                    pickle.dump({'poster': poster, 'video': info}, o, pickle.HIGHEST_PROTOCOL)
 
             return {'poster': poster, 'video': info}
 
@@ -273,7 +287,6 @@ def category_drama(path, block_id):
                 for content in block.find_all('li'):
                     path = content.find('a').attrs['href']
                     info = cache.cacheFunction(drama_detail_info, path)
-                    info = drama_detail_info(path)
                     item = ListItem(info['video']['title'])
                     item.setArt({'poster': info['poster']})
                     item.setInfo('video', info['video'])
