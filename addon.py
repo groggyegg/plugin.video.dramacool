@@ -260,6 +260,7 @@ def recently(path):
             path = '/episode-detail' + episode.find('a').attrs['href']
             item = ListItem(title)
             item.setArt({'poster': poster})
+            item.setProperty('IsPlayable', 'true')
             items.append((plugin.url_for_path(path), item, False))
 
         for page in soup.findAllNext('li', {'class': ['next', 'previous']}):
