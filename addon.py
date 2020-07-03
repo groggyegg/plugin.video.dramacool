@@ -46,6 +46,7 @@ def index():
              (plugin.url_for_path('/recently-added?page=1'), ListItem('Recently Added Drama'), True),
              (plugin.url_for_path('/recently-added-movie?page=1'), ListItem('Recently Added Movie'), True),
              (plugin.url_for_path('/recently-added-kshow?page=1'), ListItem('Recently Added Korean Show'), True),
+             (plugin.url_for_path('/most-popular-drama?page=1'), ListItem('Popular Drama'), True),
              (plugin.url_for_path('/kshow'), ListItem('Korean Show'), True),
              (plugin.url_for_path('/category/korean-drama'), ListItem('Korean Drama'), True),
              (plugin.url_for_path('/category/japanese-drama'), ListItem('Japanese Drama'), True),
@@ -83,52 +84,31 @@ def search():
             return
 
     xbmcplugin.setPluginCategory(plugin.handle, 'Search "' + keyword + '"')
-    xbmcplugin.setContent(plugin.handle, 'videos')
-    headers = {'referer': domain}
-    response = requests.get(domain + '/search?type=movies&keyword=' + keyword + '&page=' + plugin.args['page'][0], headers=headers)
-
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser').find('ul', {'class': 'switch-block list-episode-item'})
-        items = []
-
-        if soup is not None:
-            for episode in soup.find_all('li'):
-                path = episode.find('a').attrs['href']
-                info = cache.cacheFunction(drama_detail_info, path)
-                item = ListItem(info['video']['title'])
-                item.setArt({'poster': info['poster']})
-                item.setInfo('video', info['video'])
-                items.append((plugin.url_for_path(path), item, True))
-
-            soup = soup.find_next_sibling()
-
-            if soup is not None:
-                for page in soup.find_all_next('li', {'class': ['next', 'previous']}):
-                    title = '[B]' + page.text + '[/B]'
-                    path = '/search' + page.find('a').attrs['href']
-                    item = ListItem(title)
-                    items.append((plugin.url_for_path(path), item, True))
-
-        xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
-    xbmcplugin.endOfDirectory(plugin.handle)
+    list_drama_pagination('/search', '?type=movies&keyword=' + keyword + '&page=' + plugin.args['page'][0])
 
 
 @plugin.route('/recently-added')
 def recently_added():
     xbmcplugin.setPluginCategory(plugin.handle, 'Recently Added Drama')
-    recently('/recently-added?page=' + plugin.args['page'][0])
+    list_episode_pagination('/recently-added?page=' + plugin.args['page'][0])
 
 
 @plugin.route('/recently-added-movie')
 def recently_added_movie():
     xbmcplugin.setPluginCategory(plugin.handle, 'Recently Added Movie')
-    recently('/recently-added-movie?page=' + plugin.args['page'][0])
+    list_episode_pagination('/recently-added-movie?page=' + plugin.args['page'][0])
 
 
 @plugin.route('/recently-added-kshow')
 def recently_added_kshow():
     xbmcplugin.setPluginCategory(plugin.handle, 'Recently Added Korean Show')
-    recently('/recently-added-kshow?page=' + plugin.args['page'][0])
+    list_episode_pagination('/recently-added-kshow?page=' + plugin.args['page'][0])
+
+
+@plugin.route('/most-popular-drama')
+def most_popular_drama():
+    xbmcplugin.setPluginCategory(plugin.handle, 'Popular Drama')
+    list_drama_pagination('/most-popular-drama', '?page=' + plugin.args['page'][0])
 
 
 @plugin.route('/category/<category_id>')
@@ -136,9 +116,9 @@ def category(category_id):
     xbmcplugin.setPluginCategory(plugin.handle, category_id.replace('-', ' ').title())
 
     if 'block' in plugin.args:
-        category_drama('/category/' + category_id, plugin.args['block'][0])
+        list_category_drama('/category/' + category_id, plugin.args['block'][0])
     else:
-        category_block('/category/' + category_id)
+        list_category_block('/category/' + category_id)
 
 
 @plugin.route('/kshow')
@@ -146,9 +126,9 @@ def kshow():
     xbmcplugin.setPluginCategory(plugin.handle, 'Korean Show')
 
     if 'block' in plugin.args:
-        category_drama('/kshow', plugin.args['block'][0])
+        list_category_drama('/kshow', plugin.args['block'][0])
     else:
-        category_block('/kshow')
+        list_category_block('/kshow')
 
 
 @plugin.route('/drama-detail/<drama_id>')
@@ -178,12 +158,8 @@ def drama_detail(drama_id):
 
 @plugin.route('/episode-detail/<episode_id>')
 def episode_detail(episode_id):
-    window = Window(10101)
     progress = DialogProgress()
     progress.create('Loading Video')
-    xbmc.sleep(100)
-    button = window.getControl(10)
-    button.setEnabled(False)
     response = requests.get(domain + '/' + episode_id)
     progress.update(25)
 
@@ -196,19 +172,18 @@ def episode_detail(episode_id):
         position = Dialog().select('Choose Server', items)
         progress.update(75)
 
-        if position != -1:
+        if position != -1 and not progress.iscanceled():
             resolveurl.add_plugin_dirs(os.path.join(Addon().getAddonInfo('path'), 'resources/lib/resolveurl/plugins'))
             url = resolveurl.resolve(items[position].getPath())
             progress.update(100)
 
-            if url:
+            if url and not progress.iscanceled():
                 item = ListItem(title, path=url)
                 xbmcplugin.setResolvedUrl(plugin.handle, True, item)
-            else:
+            elif not progress.iscanceled():
                 Dialog().notification('Couldn\'t Resolve Server', '')
 
     progress.close()
-    button.setEnabled(True)
 
 
 def drama_detail_info(path):
@@ -247,35 +222,7 @@ def drama_detail_info(path):
             return {'poster': poster, 'video': info}
 
 
-def recently(path):
-    xbmcplugin.setContent(plugin.handle, 'videos')
-    response = requests.get(domain + path)
-
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser').find('ul', {'class': 'switch-block list-episode-item'})
-        items = []
-
-        for episode in soup.find_all('li'):
-            title = '[' + episode.find('span').text + '] ' + episode.find('a').attrs['title']
-            poster = episode.find('img').attrs['data-original']
-            path = '/episode-detail' + episode.find('a').attrs['href']
-            item = ListItem(title)
-            item.setArt({'poster': poster})
-            item.setInfo('video', {})
-            item.setProperty('IsPlayable', 'true')
-            items.append((plugin.url_for_path(path), item, False))
-
-        for page in soup.findAllNext('li', {'class': ['next', 'previous']}):
-            title = '[B]' + page.text + '[/B]'
-            path = '/recently-added' + page.find('a').attrs['href']
-            item = ListItem(title)
-            items.append((plugin.url_for_path(path), item, True))
-
-        xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
-    xbmcplugin.endOfDirectory(plugin.handle)
-
-
-def category_drama(path, block_id):
+def list_category_drama(path, block_id):
     xbmcplugin.setContent(plugin.handle, 'videos')
     response = requests.get(domain + path)
 
@@ -303,7 +250,7 @@ def category_drama(path, block_id):
     xbmcplugin.endOfDirectory(plugin.handle)
 
 
-def category_block(path):
+def list_category_block(path):
     xbmcplugin.setContent(plugin.handle, 'videos')
     response = requests.get(domain + path)
 
@@ -315,6 +262,64 @@ def category_block(path):
             title = block.find_next('h4').text
             item = ListItem(title)
             items.append((plugin.url_for_path(path + '?block=' + title), item, True))
+
+        xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.endOfDirectory(plugin.handle)
+
+
+def list_drama_pagination(path, query):
+    xbmcplugin.setContent(plugin.handle, 'videos')
+    response = requests.get(domain + path + query, headers={'referer': domain})
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser').find('ul', {'class': 'switch-block list-episode-item'})
+        items = []
+
+        if soup is not None:
+            for drama in soup.find_all('li'):
+                drama_path = drama.find('a').attrs['href']
+                info = cache.cacheFunction(drama_detail_info, drama_path)
+                item = ListItem(info['video']['title'])
+                item.setArt({'poster': info['poster']})
+                item.setInfo('video', info['video'])
+                items.append((plugin.url_for_path(drama_path), item, True))
+
+            soup = soup.find_next_sibling()
+
+            if soup is not None:
+                for page in soup.find_all_next('li', {'class': ['next', 'previous']}):
+                    title = '[B]' + page.text + '[/B]'
+                    pagination_path = path + page.find('a').attrs['href']
+                    item = ListItem(title)
+                    items.append((plugin.url_for_path(pagination_path), item, True))
+
+        xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.endOfDirectory(plugin.handle)
+
+
+def list_episode_pagination(path):
+    xbmcplugin.setContent(plugin.handle, 'videos')
+    response = requests.get(domain + path)
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser').find('ul', {'class': 'switch-block list-episode-item'})
+        items = []
+
+        for episode in soup.find_all('li'):
+            title = '[' + episode.find('span').text + '] ' + episode.find('a').attrs['title']
+            poster = episode.find('img').attrs['data-original']
+            path = '/episode-detail' + episode.find('a').attrs['href']
+            item = ListItem(title)
+            item.setArt({'poster': poster})
+            item.setInfo('video', {})
+            item.setProperty('IsPlayable', 'true')
+            items.append((plugin.url_for_path(path), item, False))
+
+        for page in soup.findAllNext('li', {'class': ['next', 'previous']}):
+            title = '[B]' + page.text + '[/B]'
+            path = '/recently-added' + page.find('a').attrs['href']
+            item = ListItem(title)
+            items.append((plugin.url_for_path(path), item, True))
 
         xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
     xbmcplugin.endOfDirectory(plugin.handle)
