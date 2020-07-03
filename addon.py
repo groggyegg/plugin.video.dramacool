@@ -197,6 +197,7 @@ def episode_detail(episode_id):
         progress.update(75)
 
         if position != -1:
+            resolveurl.add_plugin_dirs(os.path.join(Addon().getAddonInfo('path'), 'resources/lib/resolveurl/plugins'))
             url = resolveurl.resolve(items[position].getPath())
             progress.update(100)
 
@@ -260,6 +261,7 @@ def recently(path):
             path = '/episode-detail' + episode.find('a').attrs['href']
             item = ListItem(title)
             item.setArt({'poster': poster})
+            item.setInfo('video', {})
             item.setProperty('IsPlayable', 'true')
             items.append((plugin.url_for_path(path), item, False))
 
