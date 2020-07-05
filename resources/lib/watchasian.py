@@ -99,6 +99,9 @@ def drama_category_list(plugin, path, block_title):
                 break
 
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_NONE)
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_TITLE)
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_GENRE)
     xbmcplugin.endOfDirectory(plugin.handle)
 
 
@@ -153,9 +156,13 @@ def drama_pagination_list(plugin, path, query):
                     page_path = path + page.find('a').attrs['href']
 
                     item = ListItem(page_title)
+                    item.setProperty('SpecialSort', 'bottom')
                     items.append((plugin.url_for_path(page_path), item, True))
 
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_NONE)
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_TITLE)
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_GENRE)
     xbmcplugin.endOfDirectory(plugin.handle)
 
 
