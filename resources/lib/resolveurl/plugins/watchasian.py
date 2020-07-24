@@ -31,10 +31,13 @@ class WatchAsianResolver(ResolveUrl):
         web_url = self.get_url(host, media_id)
         headers = {'User-Agent': common.FF_USER_AGENT, 'X-Requested-With': 'XMLHttpRequest'}
         html = self.net.http_GET(web_url, headers=headers).content
-        match = re.search('"file":"([^"]+)"', html)
-        if match:
+        source = re.search('"file":"([^"]+)"', html)
+        subtitle = re.search('"file":"([^"]+)","label":"English","kind":"captions","default":"true"', html)
+        if subtitle:
+            headers.update({'track': 'https://' + host + subtitle.group(1).replace('\\/', '/')})
+        if source:
             headers.update({'verifypeer': 'false', 'Referer': host})
-            return match.group(1).replace('\\/', '/') + helpers.append_headers(headers)
+            return source.group(1).replace('\\/', '/') + helpers.append_headers(headers)
         raise ResolverError('Video cannot be located.')
 
     def get_url(self, host, media_id):

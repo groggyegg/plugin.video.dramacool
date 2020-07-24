@@ -12,6 +12,7 @@ import re
 import resolveurl
 import shutil
 import time
+import urlparse
 import xbmc
 import xbmcplugin
 
@@ -213,6 +214,11 @@ class WatchAsian:
 
             if url:
                 item = ListItem(root.text.strip(), path=url)
+                query = urlparse.parse_qs(urlparse.urlparse(url).query)
+
+                if 'track' in query:
+                    item.setSubtitles([query['track']])
+
                 xbmcplugin.setResolvedUrl(plugin.handle, True, item)
             else:
                 Dialog().notification('Couldn\'t Resolve Server', '')
