@@ -125,9 +125,7 @@ class WatchAsian:
             'status': root.find('span', text='Status:').find_next().text,
             'year': '' if year is None else year.find_next().text,
             'genre': [a.text for a in root.find('span', text='Genre:').find_next_siblings()],
-            'aired': '' if aired is None else time.strftime('%Y-%m-%d',
-                                                            _strptime._strptime_time(str(aired.next_sibling),
-                                                                                     ' %b %d, %Y'))
+            'aired': '' if aired is None else time.strftime('%Y-%m-%d', _strptime._strptime_time(str(aired.next_sibling), ' %b %d, %Y'))
         }
         return {'poster': poster, 'video': video}
 
@@ -206,13 +204,26 @@ class WatchAsian:
         position = Dialog().select('Choose Server', items)
 
         if position != -1:
-            xbmc.executebuiltin("ActivateWindow(busydialog)")
+            xbmc.executebuiltin('ActivateWindow(busydialognocancel)')
             plugin_dirs = os.path.join(Addon().getAddonInfo('path'), 'resources/lib/resolveurl/plugins')
             resolveurl.add_plugin_dirs(plugin_dirs)
-            url = resolveurl.resolve(items[position].getPath())
+            url = items[position].getPath()
+            sub = re.search('&sub=([^&]+)', url)
+            url = resolveurl.resolve(url)
 
             if url:
                 item = ListItem(root.text.strip(), path=url)
+
+                if sub:
+                    response = self._session.get('https://embed.watchasian.to/player/sub/index.php?id=' + sub.group(1))
+                    subfile = os.path.join(xbmc.translatePath('special://temp'), root.text.strip() + '.en.srt')
+                    item.setSubtitles([subfile])
+
+                    with open(subfile, 'w') as o:
+                        for i, text in enumerate(re.split('WEBVTT\r\n\r\n|\r\n\r\n', response.text)[1:], start=1):
+                            o.write('{}\r\n{}\r\n\r\n'.format(i, text))
+
+                xbmc.executebuiltin('Dialog.Close(busydialognocancel)')
                 xbmcplugin.setResolvedUrl(plugin.handle, True, item)
             else:
                 Dialog().notification('Couldn\'t Resolve Server', '')
