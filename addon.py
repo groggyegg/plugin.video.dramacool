@@ -21,6 +21,9 @@ class WatchAsian:
         self._document = None
         self._domain = 'https://www4.watchasian.to'
         self._session = Session()
+        self._profile = xbmc.translatePath(Addon().getAddonInfo('profile'))
+        shutil.rmtree(self._profile, ignore_errors=True)
+        os.mkdir(self._profile)
 
     def category(self, path):
         response = self._session.get(self._domain + path)
@@ -216,7 +219,7 @@ class WatchAsian:
 
                 if sub:
                     response = self._session.get('https://embed.watchasian.to/player/sub/index.php?id=' + sub.group(1))
-                    subfile = os.path.join(xbmc.translatePath('special://temp'), root.text.strip() + '.en.srt')
+                    subfile = os.path.join(self._profile, root.text.strip() + '.en.srt')
                     item.setSubtitles([subfile])
 
                     with open(subfile, 'w') as o:
@@ -231,7 +234,6 @@ class WatchAsian:
 
 dramacool = WatchAsian()
 plugin = Plugin()
-shutil.rmtree(xbmc.translatePath(Addon().getAddonInfo('profile')), ignore_errors=True)
 
 
 @plugin.route('/')
