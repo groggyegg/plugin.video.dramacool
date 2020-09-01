@@ -1,249 +1,240 @@
 from bs4 import BeautifulSoup
 from requests import Session
-from routing import Plugin
-from sqlite3 import Row
+from rerouting import Rerouting
+from resources.lib.database import ExternalDatabase, InternalDatabase
 from xbmc import Keyboard
 from xbmcaddon import Addon
 from xbmcgui import Dialog, ListItem
 
-import base64
 import os
 import re
 import resolveurl
-import sqlite3
-import sys
 import xbmc
 import xbmcplugin
 
-addon_path = Addon().getAddonInfo('path')
-database = '{}/{}'.format(xbmc.translatePath(addon_path), 'resources/data/dramacool.db')
-connection = sqlite3.connect(database)
-cursor = connection.cursor()
+__plugins__ = os.path.join(xbmc.translatePath(Addon().getAddonInfo('path')), 'resources/lib/resolveurl/plugins')
+__temp__ = os.path.join(xbmc.translatePath(Addon().getAddonInfo('path')), 'resources/data/temp')
+
 domains = ('https://watchasian.net', 'https://www3.dramacool.movie')
-plugin = Plugin()
+plugin = Rerouting()
 session = Session()
 
 
 @plugin.route('/')
 def index():
-    items = [(plugin.url_for_path('/search?type=movies&page=1'), ListItem('Search Drama'), True),
-             (plugin.url_for_path('/recently-viewed'), ListItem('Recently Viewed'), True),
-             (plugin.url_for_path('/recently-added?page=1'), ListItem('Recently Added Drama'), True),
-             (plugin.url_for_path('/recently-added-movie?page=1'), ListItem('Recently Added Movie'), True),
-             (plugin.url_for_path('/recently-added-kshow?page=1'), ListItem('Recently Added KShow'), True),
-             (plugin.url_for_path('/navbar/drama-list'), ListItem('Drama List'), True),
-             (plugin.url_for_path('/navbar'), ListItem('Drama Movie'), True),
-             (plugin.url_for_path('/kshow'), ListItem('KShow'), True),
-             (plugin.url_for_path('/most-popular-drama'), ListItem('Popular Drama'), True)]
+    items = [(plugin.url_for('/search?type=movies&page=1'), ListItem('Search Drama'), True),
+             (plugin.url_for('/recently-viewed'), ListItem('Recently Viewed'), True),
+             (plugin.url_for('/recently-added?page=1'), ListItem('Recently Added Drama'), True),
+             (plugin.url_for('/recently-added-movie?page=1'), ListItem('Recently Added Movie'), True),
+             (plugin.url_for('/recently-added-kshow?page=1'), ListItem('Recently Added KShow'), True),
+             (plugin.url_for('/navbar/drama-list'), ListItem('Drama List'), True),
+             (plugin.url_for('/navbar'), ListItem('Drama Movie'), True),
+             (plugin.url_for('/filter-select/kshow'), ListItem('KShow'), True),
+             (plugin.url_for('/most-popular-drama?page=1'), ListItem('Popular Drama'), True)]
 
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
     xbmcplugin.endOfDirectory(plugin.handle)
 
 
-@plugin.route('/recently-viewed')
-def recently_viewed():
-    if 'delete' in plugin.args:
-        cursor.execute('DELETE FROM recently_viewed WHERE path = ?', (base64.b64decode(plugin.args['delete'][0]),))
+@plugin.route(r'/recently-viewed(\?delete=(?P<delete>[^&]+))?')
+def recently_viewed(delete=None):
+    ExternalDatabase.connect()
+    InternalDatabase.connect()
+
+    if delete is not None:
+        ExternalDatabase.remove(delete)
         xbmc.executebuiltin('Container.Refresh')
-        return
+    else:
+        items = []
 
-    cursor.execute('SELECT path FROM recently_viewed ORDER BY last_visited DESC')
-    items = []
+        for path in ExternalDatabase.fetchall():
+            drama = drama_detail(path)
+            item = ListItem(drama['title'])
+            item.addContextMenuItems([('Remove', 'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete=' + path + ')')])
+            item.setArt({'poster': drama.pop('poster')})
+            item.setInfo('video', drama)
+            items.append((plugin.url_for(path), item, True))
 
-    for (path,) in cursor.fetchall():
-        drama = drama_detail(path)
-        item = ListItem(drama['title'])
-        item.addContextMenuItems([('Remove', 'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete={})'.format(base64.b64encode(path)))])
-        item.setArt({'poster': drama.pop('poster')})
-        item.setInfo('video', drama)
-        items.append((plugin.url_for_path(path), item, True))
+        xbmcplugin.setContent(plugin.handle, 'videos')
+        xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+        xbmcplugin.endOfDirectory(plugin.handle)
 
-    xbmcplugin.setContent(plugin.handle, 'videos')
-    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
-    xbmcplugin.endOfDirectory(plugin.handle)
+    ExternalDatabase.close()
+    InternalDatabase.close()
 
 
-@plugin.route('/most-popular-drama')
-@plugin.route('/recently-added')
-@plugin.route('/recently-added-movie')
-@plugin.route('/recently-added-kshow')
-@plugin.route('/search')
+@plugin.route(r'/most-popular-drama\?page=[^&]+')
+@plugin.route(r'/recently-added\?page=[^&]+')
+@plugin.route(r'/recently-added-movie\?page=[^&]+')
+@plugin.route(r'/recently-added-kshow\?page=[^&]+')
+@plugin.route(r'/search\?(&?(type=movies|page=[^&]+|keyword=[^&]+))+')
 def pagination():
-    if plugin.path == '/search' and 'keyword' not in plugin.args:
+    if plugin.path == '/search' and 'keyword' not in plugin.query:
         keyboard = Keyboard()
         keyboard.doModal()
 
         if keyboard.isConfirmed():
-            response = request('{}{}&keyword={}'.format(plugin.path, sys.argv[2], keyboard.getText()))
+            response = request(plugin.pathqs + '&keyword=' + keyboard.getText())
         else:
             return
     else:
-        response = request(plugin.path)
+        response = request(plugin.pathqs)
 
     document = BeautifulSoup(response.text, 'html.parser').find('ul', {'class': 'switch-block list-episode-item'})
     items = []
 
     if document is not None:
         if plugin.path in ('/most-popular-drama', '/search'):
+            InternalDatabase.connect()
+
             for a in document.find_all('a'):
                 path = a.attrs['href']
                 drama = drama_detail(path)
                 item = ListItem(drama['title'])
                 item.setArt({'poster': drama.pop('poster')})
                 item.setInfo('video', drama)
-                items.append((plugin.url_for_path(path), item, True))
+                items.append((plugin.url_for(path), item, True))
+
+            InternalDatabase.close()
         else:
             for a in document.find_all('a'):
                 item = ListItem(u'[{}] {}'.format(a.find('span', {'class': 'type'}).text, a.attrs['title']))
                 item.setArt({'poster': a.find('img').attrs['data-original']})
                 item.setInfo('video', {})
                 item.setProperty('IsPlayable', 'true')
-                items.append((plugin.url_for_path('/play{}'.format(a.attrs['href'])), item, False))
+                items.append((plugin.url_for(a.attrs['href']), item, False))
 
         document = document.find_next_sibling()
 
         if document is not None:
             for li in document.find_all('li', {'class': ['next', 'previous']}):
                 item = ListItem(li.text)
-                items.append((plugin.url_for_path(plugin.path + li.find('a').attrs['href']), item, True))
+                items.append((plugin.url_for(plugin.path + li.find('a').attrs['href']), item, True))
 
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
     xbmcplugin.endOfDirectory(plugin.handle)
 
 
-@plugin.route('/navbar/drama-list')
 @plugin.route('/navbar')
+@plugin.route('/navbar/drama-list')
 def navbar():
     if plugin.path == '/navbar/drama-list':
-        items = [(plugin.url_for_path('/category/korean-drama'), ListItem('Korean Drama'), True),
-                 (plugin.url_for_path('/category/japanese-drama'), ListItem('Japanese Drama'), True),
-                 (plugin.url_for_path('/category/taiwanese-drama'), ListItem('Taiwanese Drama'), True),
-                 (plugin.url_for_path('/category/hong-kong-drama'), ListItem('Hong Kong Drama'), True),
-                 (plugin.url_for_path('/category/chinese-drama'), ListItem('Chinese Drama'), True),
-                 (plugin.url_for_path('/category/other-asia-drama'), ListItem('Other Asia Drama'), True),
-                 (plugin.url_for_path('/category/thailand-drama'), ListItem('Thailand Drama'), True)]
+        items = [(plugin.url_for('/filter-select/category/korean-drama'), ListItem('Korean Drama'), True),
+                 (plugin.url_for('/filter-select/category/japanese-drama'), ListItem('Japanese Drama'), True),
+                 (plugin.url_for('/filter-select/category/taiwanese-drama'), ListItem('Taiwanese Drama'), True),
+                 (plugin.url_for('/filter-select/category/hong-kong-drama'), ListItem('Hong Kong Drama'), True),
+                 (plugin.url_for('/filter-select/category/chinese-drama'), ListItem('Chinese Drama'), True),
+                 (plugin.url_for('/filter-select/category/other-asia-drama'), ListItem('Other Asia Drama'), True),
+                 (plugin.url_for('/filter-select/category/thailand-drama'), ListItem('Thailand Drama'), True)]
     else:
-        items = [(plugin.url_for_path('/category/korean-movies'), ListItem('Korean Movies'), True),
-                 (plugin.url_for_path('/category/japanese-movies'), ListItem('Japanese Movies'), True),
-                 (plugin.url_for_path('/category/taiwanese-movies'), ListItem('Taiwanese Movies'), True),
-                 (plugin.url_for_path('/category/hong-kong-movies'), ListItem('Hong Kong Movies'), True),
-                 (plugin.url_for_path('/category/chinese-movies'), ListItem('Chinese Movies'), True),
-                 (plugin.url_for_path('/category/american-movies'), ListItem('American Movies'), True),
-                 (plugin.url_for_path('/category/other-asia-movies'), ListItem('Other Asia Movies'), True),
-                 (plugin.url_for_path('/category/thailand-movies'), ListItem('Thailand Movies'), True)]
+        items = [(plugin.url_for('/filter-select/category/korean-movies'), ListItem('Korean Movies'), True),
+                 (plugin.url_for('/filter-select/category/japanese-movies'), ListItem('Japanese Movies'), True),
+                 (plugin.url_for('/filter-select/category/taiwanese-movies'), ListItem('Taiwanese Movies'), True),
+                 (plugin.url_for('/filter-select/category/hong-kong-movies'), ListItem('Hong Kong Movies'), True),
+                 (plugin.url_for('/filter-select/category/chinese-movies'), ListItem('Chinese Movies'), True),
+                 (plugin.url_for('/filter-select/category/american-movies'), ListItem('American Movies'), True),
+                 (plugin.url_for('/filter-select/category/other-asia-movies'), ListItem('Other Asia Movies'), True),
+                 (plugin.url_for('/filter-select/category/thailand-movies'), ListItem('Thailand Movies'), True)]
 
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
     xbmcplugin.endOfDirectory(plugin.handle)
 
 
-@plugin.route('/category/korean-drama')
-@plugin.route('/category/japanese-drama')
-@plugin.route('/category/taiwanese-drama')
-@plugin.route('/category/hong-kong-drama')
-@plugin.route('/category/chinese-drama')
-@plugin.route('/category/other-asia-drama')
-@plugin.route('/category/thailand-drama')
-@plugin.route('/category/korean-movies')
-@plugin.route('/category/japanese-movies')
-@plugin.route('/category/taiwanese-movies')
-@plugin.route('/category/hong-kong-movies')
-@plugin.route('/category/chinese-movies')
-@plugin.route('/category/american-movies')
-@plugin.route('/category/other-asia-movies')
-@plugin.route('/category/thailand-movies')
-@plugin.route('/kshow')
-def filter_category():
-    path = base64.b64encode(plugin.path.encode())
-    items = [(plugin.url_for_path('/filter/{}/char'.format(path)), ListItem('Filter By Char'), True),
-             (plugin.url_for_path('/filter/{}/year'.format(path)), ListItem('Filter By Year'), True),
-             (plugin.url_for_path('/filter/{}/status'.format(path)), ListItem('Filter By Status'), True)]
+@plugin.route('/filter-select/(?P<path>.+)')
+def filter_select(path):
+    items = [(plugin.url_for('/filter-select-id/char/' + path), ListItem('Filter By Char'), True),
+             (plugin.url_for('/filter-select-id/year/' + path), ListItem('Filter By Year'), True),
+             (plugin.url_for('/filter-select-id/status/' + path), ListItem('Filter By Status'), True)]
 
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
     xbmcplugin.endOfDirectory(plugin.handle)
 
 
-@plugin.route('/filter/<path>/<filter_id>')
-def filter_content(path, filter_id):
-    response = request(base64.b64decode(path))
+@plugin.route('/filter-select-id/(?P<select_id>[^/]+)(?P<path>/.+)')
+def filter_select_id(select_id, path):
+    response = request(path)
     document = BeautifulSoup(response.text, 'html.parser')
     items = []
 
-    if filter_id == 'char':
+    if select_id == 'char':
         for div in document.find_all('div', {'class': 'list-content'}):
-            title = div.find('h4').text
-            item = ListItem(title)
-            items.append((plugin.url_for_path('{}/{}'.format(plugin.path, ord(title))), item, True))
+            select_value = div.find('h4').text
+            item = ListItem(select_value)
+            items.append((plugin.url_for('/list-select-id/{}/{}{}'.format(select_id, ord(select_value), path)), item, True))
     else:
-        for option in document.find('select', {'id': 'select-{}'.format(filter_id)}).find_all('option')[1:]:
+        for option in document.find('select', {'id': 'select-{}'.format(select_id)}).find_all('option')[1:]:
             item = ListItem(option.text)
-            items.append((plugin.url_for_path('{}/{}'.format(plugin.path, option.attrs['value'])), item, True))
+            items.append((plugin.url_for('/list-select-id/{}/{}{}'.format(select_id, option.attrs['value'], path)), item, True))
 
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
     xbmcplugin.endOfDirectory(plugin.handle)
 
 
-@plugin.route('/filter/<path>/<filter_id>/<select_id>')
-def list_content(path, filter_id, select_id):
-    response = request(base64.b64decode(path))
+@plugin.route('/list-select-id/(?P<select_id>[^/]+)/(?P<select_value>[^/]+)(?P<path>/.+)')
+def list_select_id(select_id, select_value, path):
+    InternalDatabase.connect()
+    response = request(path)
     document = BeautifulSoup(response.text, 'html.parser')
     items = []
 
-    if filter_id == 'char':
-        select_id = chr(int(select_id))
+    if select_id == 'char':
+        select_value = chr(int(select_value))
 
         for div in document.find_all('div', {'class': 'list-content'}):
-            if div.find('h4').text == select_id:
+            if div.find('h4').text == select_value:
                 for a in div.find('ul', {'class': 'filter-char'}).find_all('a'):
                     path = a.attrs['href']
                     drama = drama_detail(path)
                     item = ListItem(drama['title'])
                     item.setArt({'poster': drama.pop('poster')})
                     item.setInfo('video', drama)
-                    items.append((plugin.url_for_path(path), item, True))
+                    items.append((plugin.url_for(path), item, True))
 
                 break
     else:
-        for li in document.find_all('li', {'class': '{}_{}'.format(filter_id, select_id)}):
+        for li in document.find_all('li', {'class': '{}_{}'.format(select_id, select_value)}):
             path = li.find('a').attrs['href']
             drama = drama_detail(path)
             item = ListItem(drama['title'])
             item.setArt({'poster': drama.pop('poster')})
             item.setInfo('video', drama)
-            items.append((plugin.url_for_path(path), item, True))
+            items.append((plugin.url_for(path), item, True))
 
+    InternalDatabase.close()
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_TITLE)
     xbmcplugin.endOfDirectory(plugin.handle)
 
 
-@plugin.route('/drama-detail/<path>')
-def list_episode(path):
-    path = '/drama-detail/{}'.format(path)
-    response = request(path)
+@plugin.route('/drama-detail/.+')
+def list_episode():
+    ExternalDatabase.connect()
+    ExternalDatabase.add(plugin.path)
+    ExternalDatabase.close()
+    response = request(plugin.path)
     document = BeautifulSoup(response.text, 'html.parser')
-    cursor.execute('INSERT INTO recently_viewed (path) VALUES (?)', (path,))
     items = []
 
     for a in document.find('ul', {'class': 'all-episode'}).find_all('a'):
         item = ListItem('[{}] {}'.format(a.find('span').text, a.find('h3').text.strip('\n ')))
         item.setInfo('video', {})
         item.setProperty('IsPlayable', 'true')
-        items.append((plugin.url_for_path('/play{}'.format(a.attrs['href'])), item, False))
+        items.append((plugin.url_for(a.attrs['href']), item, False))
 
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
     xbmcplugin.endOfDirectory(plugin.handle)
 
 
-@plugin.route('/play/<path>')
-def play_episode(path):
-    response = request('/{}'.format(path))
+@plugin.route('/[^/]+.html')
+def play_episode():
+    response = request(plugin.path)
     document = BeautifulSoup(response.text, 'html.parser')
     title = document.find('h1').text.strip()
     all_server = document.find_all('li', {'data-video': True})
@@ -251,7 +242,7 @@ def play_episode(path):
 
     if position != -1:
         xbmc.executebuiltin('ActivateWindow(busydialognocancel)')
-        resolveurl.add_plugin_dirs(os.path.join(addon_path, 'resources/lib/resolveurl/plugins'))
+        resolveurl.add_plugin_dirs(__plugins__)
         url = resolveurl.resolve(all_server[position].attrs['data-video'])
 
         if url:
@@ -260,10 +251,9 @@ def play_episode(path):
 
             if sub:
                 response = session.get('https://embed.watchasian.to/player/sub/index.php?id=' + sub.group(1))
-                file = os.path.join(addon_path, 'resources/data/dramacool.en.srt')
-                item.setSubtitles([file])
+                item.setSubtitles([__temp__])
 
-                with open(file, 'w') as o:
+                with open(__temp__, 'w') as o:
                     for i, text in enumerate(re.split('WEBVTT\r\n\r\n|\r\n\r\n', response.text)[1:], start=1):
                         o.write('{}\r\n{}\r\n\r\n'.format(i, text.encode('utf-8')))
 
@@ -275,51 +265,21 @@ def play_episode(path):
 
 
 def drama_detail(path):
-    cursor.row_factory = Row
-    cursor.execute('SELECT * FROM drama WHERE path = ?', (path,))
-    drama = cursor.fetchone()
+    drama = InternalDatabase.fetchone(path)
 
     if drama is None:
         response = request(path)
         document = BeautifulSoup(response.content, 'html.parser')
         element = document.find('div', {'class': 'details'})
-        director = element.find('span', text='Director:')
         year = document.find('span', text='Released:').find_next_sibling('a').text
-        cast = document.find('div', {'class': 'slider-star'})
-        drama = {
-            'poster': element.find('img').attrs['src'],
-            'title': element.find('h1').text,
-            'plot': element.find('span', text='Description').parent.find_next_sibling().text,
-            'country': document.find('span', text='Country: ').next_sibling.strip(),
-            'status': document.find('span', text='Status:').find_next_sibling('a').text,
-            'genre': [a.text for a in document.find('span', text='Genre:').find_next_siblings('a')],
-            'director': None if director is None else director.next_sibling.strip(),
-            'year': int(year) if year.isdigit() else None,
-            'cast': [] if cast is None else [a.attrs['title'] for a in cast.find_all('a')]
-        }
-        cursor.execute('INSERT INTO drama VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (
-            path,
-            drama['poster'],
-            drama['title'],
-            drama['plot'],
-            drama['director'],
-            drama['country'],
-            drama['status'],
-            drama['year']
-        ))
-
-        for label in drama['genre']:
-            cursor.execute('INSERT INTO genre VALUES (?, ?)', (path, label))
-
-        for name in drama['cast']:
-            cursor.execute('INSERT INTO cast VALUES (?, ?)', (path, name))
-    else:
-        drama = dict(drama)
-        cursor.row_factory = None
-        cursor.execute('SELECT name FROM cast WHERE path = ?', (path,))
-        drama['cast'] = [name for (name,) in cursor.fetchall()]
-        cursor.execute('SELECT label FROM genre WHERE path = ?', (path,))
-        drama['genre'] = [label for (label,) in cursor.fetchall()]
+        InternalDatabase.add((path,
+                              element.find('img').attrs['src'],
+                              element.find('h1').text,
+                              element.find('span', text='Description').parent.find_next_sibling().text,
+                              document.find('span', text='Country: ').next_sibling.strip(),
+                              document.find('span', text='Status:').find_next_sibling('a').text,
+                              int(year) if year.isdigit() else None))
+        drama = InternalDatabase.fetchone(path)
 
     return drama
 
@@ -333,26 +293,7 @@ def request(path):
 
 
 def create_database():
-    cursor.execute('CREATE TABLE IF NOT EXISTS recently_viewed ('
-                   + 'path TEXT UNIQUE ON CONFLICT REPLACE, '
-                   + 'last_visited DATETIME DEFAULT CURRENT_TIMESTAMP)')
-    cursor.execute('CREATE TABLE IF NOT EXISTS drama ('
-                   + 'path TEXT PRIMARY KEY ON CONFLICT IGNORE, '
-                   + 'poster TEXT, '
-                   + 'title TEXT NOT NULL, '
-                   + 'plot TEXT, '
-                   + 'director TEXT, '
-                   + 'country TEXT, '
-                   + 'status TEXT, '
-                   + 'year SMALLINT)')
-    cursor.execute('CREATE TABLE IF NOT EXISTS cast ('
-                   + 'path TEXT NOT NULL, '
-                   + 'name TEXT NOT NULL, '
-                   + 'PRIMARY KEY (path, name) ON CONFLICT IGNORE)')
-    cursor.execute('CREATE TABLE IF NOT EXISTS genre ('
-                   + 'path TEXT NOT NULL, '
-                   + 'label TEXT NOT NULL, '
-                   + 'PRIMARY KEY (path, label) ON CONFLICT IGNORE)')
+    InternalDatabase.connect()
 
     for path in ['/drama-list', '/kshow']:
         response = request(path)
@@ -361,9 +302,8 @@ def create_database():
         for li in document.find_all('li', {'class': 'filter-item'}):
             drama_detail(li.find('a').attrs['href'])
 
+    InternalDatabase.close()
+
 
 if __name__ == '__main__':
     plugin.run()
-
-connection.commit()
-connection.close()
