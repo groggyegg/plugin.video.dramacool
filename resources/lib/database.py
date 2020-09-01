@@ -5,7 +5,6 @@ import sqlite3
 import xbmc
 
 __profile__ = xbmc.translatePath(Addon().getAddonInfo('profile'))
-print(__profile__)
 
 if not os.path.exists(__profile__):
     os.makedirs(__profile__)

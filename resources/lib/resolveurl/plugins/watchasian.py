@@ -24,17 +24,14 @@ from resolveurl.resolver import ResolveUrl, ResolverError
 
 class WatchAsianResolver(ResolveUrl):
     name = "watchasian"
-    domains = ['embed.watchasian.to']
-    pattern = r'(?://|\.)(embed\.watchasian\.to)/(?:[a-zA-Z]+).php\?(.+)'
+    domains = ['embed.watchasian.to', 'embed.dramacool.movie']
+    pattern = r'(?://|\.)(embed\.(?:watchasian\.to|dramacool\.movie))/(?:[a-zA-Z]+).php\?(.+)'
 
     def get_media_url(self, host, media_id):
         web_url = self.get_url(host, media_id)
         headers = {'User-Agent': common.FF_USER_AGENT, 'X-Requested-With': 'XMLHttpRequest'}
         html = self.net.http_GET(web_url, headers=headers).content
         source = re.search('"file":"([^"]+)"', html)
-        subtitle = re.search('"file":"([^"]+)","label":"English","kind":"captions","default":"true"', html)
-        if subtitle:
-            headers.update({'track': 'https://' + host + subtitle.group(1).replace('\\/', '/')})
         if source:
             headers.update({'verifypeer': 'false', 'Referer': host})
             return source.group(1).replace('\\/', '/') + helpers.append_headers(headers)

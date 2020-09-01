@@ -99,7 +99,7 @@ def pagination():
             InternalDatabase.close()
         else:
             for a in document.find_all('a'):
-                item = ListItem(u'[{}] {}'.format(a.find('span', {'class': 'type'}).text, a.attrs['title']))
+                item = ListItem(u'[{}] {} {}'.format(a.find('span', {'class': 'type'}).text, a.find('h3').text, a.find('span', {'class': 'ep'}).text))
                 item.setArt({'poster': a.find('img').attrs['data-original']})
                 item.setInfo('video', {})
                 item.setProperty('IsPlayable', 'true')
@@ -243,25 +243,29 @@ def play_episode():
     if position != -1:
         xbmc.executebuiltin('ActivateWindow(busydialognocancel)')
         resolveurl.add_plugin_dirs(__plugins__)
-        url = resolveurl.resolve(all_server[position].attrs['data-video'])
 
-        if url:
-            item = ListItem(title, path=url)
-            sub = re.search('&sub=([^&]+)', all_server[position].attrs['data-video'])
+        try:
+            url = resolveurl.resolve(all_server[position].attrs['data-video'])
 
-            if sub:
-                response = session.get('https://embed.watchasian.to/player/sub/index.php?id=' + sub.group(1))
-                item.setSubtitles([__temp__])
+            if url:
+                item = ListItem(title, path=url)
+                sub = re.search('&sub=([^&]+)', all_server[position].attrs['data-video'])
 
-                with open(__temp__, 'w') as o:
-                    for i, text in enumerate(re.split('WEBVTT\r\n\r\n|\r\n\r\n', response.text)[1:], start=1):
-                        o.write('{}\r\n{}\r\n\r\n'.format(i, text.encode('utf-8')))
+                if sub:
+                    response = session.get('https://embed.watchasian.to/player/sub/index.php?id=' + sub.group(1))
+                    item.setSubtitles([__temp__])
 
-            xbmc.executebuiltin('Dialog.Close(busydialognocancel)')
-            xbmcplugin.setResolvedUrl(plugin.handle, True, item)
-        else:
-            xbmc.executebuiltin('Dialog.Close(busydialognocancel)')
+                    with open(__temp__, 'w') as o:
+                        for i, text in enumerate(re.split('WEBVTT\r\n\r\n|\r\n\r\n', response.text)[1:], start=1):
+                            o.write('{}\r\n{}\r\n\r\n'.format(i, text.encode('utf-8')))
+
+                xbmcplugin.setResolvedUrl(plugin.handle, True, item)
+            else:
+                Dialog().notification('Couldn\'t Resolve Server', '')
+        except:
             Dialog().notification('Couldn\'t Resolve Server', '')
+
+        xbmc.executebuiltin('Dialog.Close(busydialognocancel)')
 
 
 def drama_detail(path):
@@ -275,8 +279,8 @@ def drama_detail(path):
         InternalDatabase.add((path,
                               element.find('img').attrs['src'],
                               element.find('h1').text,
-                              element.find('span', text='Description').parent.find_next_sibling().text,
-                              document.find('span', text='Country: ').next_sibling.strip(),
+                              element.find('span', text=re.compile('Description:?')).parent.find_next_sibling().text,
+                              document.find('span', text=re.compile('Country: ?')).next_sibling.strip(),
                               document.find('span', text='Status:').find_next_sibling('a').text,
                               int(year) if year.isdigit() else None))
         drama = InternalDatabase.fetchone(path)
