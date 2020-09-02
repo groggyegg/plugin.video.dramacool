@@ -23,6 +23,7 @@ session = Session()
 @plugin.route('/')
 def index():
     items = [(plugin.url_for('/search?type=movies&page=1'), ListItem('Search Drama'), True),
+             (plugin.url_for('/search?type=stars&page=1'), ListItem('Search Star'), True),
              (plugin.url_for('/recently-viewed'), ListItem('Recently Viewed'), True),
              (plugin.url_for('/recently-added?page=1'), ListItem('Recently Added Drama'), True),
              (plugin.url_for('/recently-added-movie?page=1'), ListItem('Recently Added Movie'), True),
@@ -30,7 +31,8 @@ def index():
              (plugin.url_for('/navbar/drama-list'), ListItem('Drama List'), True),
              (plugin.url_for('/navbar'), ListItem('Drama Movie'), True),
              (plugin.url_for('/filter-select/kshow'), ListItem('KShow'), True),
-             (plugin.url_for('/most-popular-drama?page=1'), ListItem('Popular Drama'), True)]
+             (plugin.url_for('/most-popular-drama?page=1'), ListItem('Popular Drama'), True),
+             (plugin.url_for('/list-star.html?page=1'), ListItem('Popular Star'), True)]
 
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
@@ -64,11 +66,12 @@ def recently_viewed(delete=None):
     InternalDatabase.close()
 
 
+@plugin.route(r'/list-star.html\?page=[^&]+')
 @plugin.route(r'/most-popular-drama\?page=[^&]+')
 @plugin.route(r'/recently-added\?page=[^&]+')
 @plugin.route(r'/recently-added-movie\?page=[^&]+')
 @plugin.route(r'/recently-added-kshow\?page=[^&]+')
-@plugin.route(r'/search\?(&?(type=movies|page=[^&]+|keyword=[^&]+))+')
+@plugin.route(r'/search\?(&?(type=movies|type=stars|page=[^&]+|keyword=[^&]+))+')
 def pagination():
     if plugin.path == '/search' and 'keyword' not in plugin.query:
         keyboard = Keyboard()
@@ -81,22 +84,30 @@ def pagination():
     else:
         response = request(plugin.pathqs)
 
-    document = BeautifulSoup(response.text, 'html.parser').find('ul', {'class': 'switch-block list-episode-item'})
+    document = BeautifulSoup(response.text, 'html.parser').find('ul', {'class': ['list-episode-item', 'list-star']})
     items = []
 
     if document is not None:
-        if plugin.path in ('/most-popular-drama', '/search'):
-            InternalDatabase.connect()
+        if plugin.path in ('/list-star.html', '/most-popular-drama', '/search'):
+            if plugin.path == '/list-star.html' or ('type' in plugin.query and 'stars' in plugin.query['type']):
+                for li in document.find_all('li', recursive=False):
+                    plot = li.find('ul')
+                    item = ListItem(li.find('img').attrs['alt'])
+                    item.setArt({'poster': li.find('img').attrs['data-original']})
+                    item.setInfo('video', {'plot': '' if plot is None else plot.text})
+                    items.append((plugin.url_for(li.find('a').attrs['href']), item, True))
+            else:
+                InternalDatabase.connect()
 
-            for a in document.find_all('a'):
-                path = a.attrs['href']
-                drama = drama_detail(path)
-                item = ListItem(drama['title'])
-                item.setArt({'poster': drama.pop('poster')})
-                item.setInfo('video', drama)
-                items.append((plugin.url_for(path), item, True))
+                for a in document.find_all('a'):
+                    path = a.attrs['href']
+                    drama = drama_detail(path)
+                    item = ListItem(drama['title'])
+                    item.setArt({'poster': drama.pop('poster')})
+                    item.setInfo('video', drama)
+                    items.append((plugin.url_for(path), item, True))
 
-            InternalDatabase.close()
+                InternalDatabase.close()
         else:
             for a in document.find_all('a'):
                 item = ListItem(u'[{}] {} {}'.format(a.find('span', {'class': 'type'}).text, a.find('h3').text, a.find('span', {'class': 'ep'}).text))
@@ -114,6 +125,29 @@ def pagination():
 
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.endOfDirectory(plugin.handle)
+
+
+@plugin.route('/star/[^/]+')
+def star():
+    response = request(plugin.path)
+    document = BeautifulSoup(response.text, 'html.parser')
+    InternalDatabase.connect()
+    items = []
+
+    for a in document.find('ul', {'class': 'list-episode-item'}).find_all('a'):
+        path = a.attrs['href']
+        drama = drama_detail(path)
+        item = ListItem(drama['title'])
+        item.setArt({'poster': drama.pop('poster')})
+        item.setInfo('video', drama)
+        items.append((plugin.url_for(path), item, True))
+
+    InternalDatabase.close()
+    xbmcplugin.setContent(plugin.handle, 'videos')
+    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_TITLE)
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_VIDEO_YEAR)
     xbmcplugin.endOfDirectory(plugin.handle)
 
 
