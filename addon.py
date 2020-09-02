@@ -209,6 +209,7 @@ def list_select_id(select_id, select_value, path):
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_TITLE)
+    xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_VIDEO_YEAR)
     xbmcplugin.endOfDirectory(plugin.handle)
 
 
@@ -261,7 +262,7 @@ def play_episode():
 
                 xbmcplugin.setResolvedUrl(plugin.handle, True, item)
             else:
-                Dialog().notification('Couldn\'t Resolve Server', '')
+                raise
         except:
             Dialog().notification('Couldn\'t Resolve Server', '')
 
