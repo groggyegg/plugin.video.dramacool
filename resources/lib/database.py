@@ -51,7 +51,7 @@ class ExternalDatabase:
 
     @classmethod
     def remove(cls, path):
-        cls._cursor.execute('DELETE FROM recently_viewed WHERE path = ?', (path,))
+        cls._cursor.execute('DELETE FROM recently_viewed WHERE path LIKE ?', (path,))
 
 
 class InternalDatabase:
