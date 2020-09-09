@@ -1,0 +1,149 @@
+msgid ""
+msgstr ""
+
+#: /
+msgctxt "#33000"
+msgid "Search Drama"
+msgstr ""
+
+msgctxt "#33001"
+msgid "Search Star"
+msgstr ""
+
+msgctxt "#33002"
+msgid "Recently Viewed"
+msgstr ""
+
+msgctxt "#33003"
+msgid "Recently Added Drama"
+msgstr ""
+
+msgctxt "#33004"
+msgid "Recently Added Movie"
+msgstr ""
+
+msgctxt "#33005"
+msgid "Recently Added KShow"
+msgstr ""
+
+msgctxt "#33006"
+msgid "Drama List"
+msgstr ""
+
+msgctxt "#33007"
+msgid "Drama Movie"
+msgstr ""
+
+msgctxt "#33008"
+msgid "KShow"
+msgstr ""
+
+msgctxt "#33009"
+msgid "Popular Drama"
+msgstr ""
+
+msgctxt "#33010"
+msgid "Popular Star"
+msgstr ""
+
+#: /recently-viewed
+msgctxt "#33100"
+msgid "Remove"
+msgstr ""
+
+msgctxt "#33101"
+msgid "Remove All"
+msgstr ""
+
+#: /drama-list
+msgctxt "#33200"
+msgid "Korean Drama"
+msgstr ""
+
+msgctxt "#33201"
+msgid "Japanese Drama"
+msgstr ""
+
+msgctxt "#33202"
+msgid "Taiwanese Drama"
+msgstr ""
+
+msgctxt "#33203"
+msgid "Hong Kong Drama"
+msgstr ""
+
+msgctxt "#33204"
+msgid "Chinese Drama"
+msgstr ""
+
+msgctxt "#33205"
+msgid "Other Asia Drama"
+msgstr ""
+
+msgctxt "#33206"
+msgid "Thailand Drama"
+msgstr ""
+
+#: /drama-movie
+msgctxt "#33300"
+msgid "Korean Movies"
+msgstr ""
+
+msgctxt "#33301"
+msgid "Japanese Movies"
+msgstr ""
+
+msgctxt "#33302"
+msgid "Taiwanese Movies"
+msgstr ""
+
+msgctxt "#33303"
+msgid "Hong Kong Movies"
+msgstr ""
+
+msgctxt "#33304"
+msgid "Chinese Movies"
+msgstr ""
+
+msgctxt "#33305"
+msgid "American Movies"
+msgstr ""
+
+msgctxt "#33306"
+msgid "Other Asia Movies"
+msgstr ""
+
+msgctxt "#33307"
+msgid "Thailand Movies"
+msgstr ""
+
+#: /filter-select/
+msgctxt "#33400"
+msgid "Filter By Char"
+msgstr ""
+
+msgctxt "#33401"
+msgid "Filter By Year"
+msgstr ""
+
+msgctxt "#33402"
+msgid "Filter By Status"
+msgstr ""
+
+#: /*.html
+msgctxt "#33500"
+msgid "Choose Server"
+msgstr ""
+
+msgctxt "#33501"
+msgid "Couldn't Resolve Server"
+msgstr ""
+
+#: /list-star.html /most-popular-drama /recently-added* /search
+msgctxt "#33600"
+msgid "Next >"
+msgstr ""
+
+msgctxt "#33601"
+msgid "< Previous"
+msgstr ""

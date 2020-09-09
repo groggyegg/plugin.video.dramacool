@@ -16,23 +16,24 @@ __plugins__ = os.path.join(xbmc.translatePath(Addon().getAddonInfo('path')), 're
 __temp__ = os.path.join(xbmc.translatePath(Addon().getAddonInfo('path')), 'resources/data/temp')
 
 domains = ('https://watchasian.net', 'https://www3.dramacool.movie')
+localized_str = Addon().getLocalizedString
 plugin = Rerouting()
 session = Session()
 
 
 @plugin.route('/')
 def index():
-    items = [(plugin.url_for('/search?type=movies&page=1'), ListItem('Search Drama'), True),
-             (plugin.url_for('/search?type=stars&page=1'), ListItem('Search Star'), True),
-             (plugin.url_for('/recently-viewed'), ListItem('Recently Viewed'), True),
-             (plugin.url_for('/recently-added?page=1'), ListItem('Recently Added Drama'), True),
-             (plugin.url_for('/recently-added-movie?page=1'), ListItem('Recently Added Movie'), True),
-             (plugin.url_for('/recently-added-kshow?page=1'), ListItem('Recently Added KShow'), True),
-             (plugin.url_for('/drama-list'), ListItem('Drama List'), True),
-             (plugin.url_for('/drama-movie'), ListItem('Drama Movie'), True),
-             (plugin.url_for('/filter-select/kshow'), ListItem('KShow'), True),
-             (plugin.url_for('/most-popular-drama?page=1'), ListItem('Popular Drama'), True),
-             (plugin.url_for('/list-star.html?page=1'), ListItem('Popular Star'), True)]
+    items = [(plugin.url_for('/search?type=movies&page=1'), ListItem(localized_str(33000)), True),
+             (plugin.url_for('/search?type=stars&page=1'), ListItem(localized_str(33001)), True),
+             (plugin.url_for('/recently-viewed'), ListItem(localized_str(33002)), True),
+             (plugin.url_for('/recently-added?page=1'), ListItem(localized_str(33003)), True),
+             (plugin.url_for('/recently-added-movie?page=1'), ListItem(localized_str(33004)), True),
+             (plugin.url_for('/recently-added-kshow?page=1'), ListItem(localized_str(33005)), True),
+             (plugin.url_for('/drama-list'), ListItem(localized_str(33006)), True),
+             (plugin.url_for('/drama-movie'), ListItem(localized_str(33007)), True),
+             (plugin.url_for('/filter-select/kshow'), ListItem(localized_str(33008)), True),
+             (plugin.url_for('/most-popular-drama?page=1'), ListItem(localized_str(33009)), True),
+             (plugin.url_for('/list-star.html?page=1'), ListItem(localized_str(33010)), True)]
 
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
@@ -54,8 +55,8 @@ def recently_viewed(delete=None):
             drama = drama_detail(path)
             item = ListItem(drama['title'])
             item.addContextMenuItems([
-                ('Remove', 'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete=' + path + ')'),
-                ('Remove All', 'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete=%)')
+                (localized_str(33100), 'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete=' + path + ')'),
+                (localized_str(33101), 'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete=%)')
             ])
             item.setArt({'poster': drama.pop('poster')})
             item.setInfo('video', drama)
@@ -123,7 +124,7 @@ def pagination():
 
         if document is not None:
             for li in document.find_all('li', {'class': ['next', 'previous']}):
-                item = ListItem(li.text)
+                item = ListItem(localized_str(33600 if li.text == 'Next >' else 33601))
                 items.append((plugin.url_for(plugin.path + li.find('a').attrs['href']), item, True))
 
     xbmcplugin.setContent(plugin.handle, 'videos')
@@ -156,13 +157,13 @@ def star():
 
 @plugin.route('/drama-list')
 def drama_list():
-    items = [(plugin.url_for('/filter-select/category/korean-drama'), ListItem('Korean Drama'), True),
-             (plugin.url_for('/filter-select/category/japanese-drama'), ListItem('Japanese Drama'), True),
-             (plugin.url_for('/filter-select/category/taiwanese-drama'), ListItem('Taiwanese Drama'), True),
-             (plugin.url_for('/filter-select/category/hong-kong-drama'), ListItem('Hong Kong Drama'), True),
-             (plugin.url_for('/filter-select/category/chinese-drama'), ListItem('Chinese Drama'), True),
-             (plugin.url_for('/filter-select/category/other-asia-drama'), ListItem('Other Asia Drama'), True),
-             (plugin.url_for('/filter-select/category/thailand-drama'), ListItem('Thailand Drama'), True)]
+    items = [(plugin.url_for('/filter-select/category/korean-drama'), ListItem(localized_str(33200)), True),
+             (plugin.url_for('/filter-select/category/japanese-drama'), ListItem(localized_str(33201)), True),
+             (plugin.url_for('/filter-select/category/taiwanese-drama'), ListItem(localized_str(33202)), True),
+             (plugin.url_for('/filter-select/category/hong-kong-drama'), ListItem(localized_str(33203)), True),
+             (plugin.url_for('/filter-select/category/chinese-drama'), ListItem(localized_str(33204)), True),
+             (plugin.url_for('/filter-select/category/other-asia-drama'), ListItem(localized_str(33205)), True),
+             (plugin.url_for('/filter-select/category/thailand-drama'), ListItem(localized_str(33206)), True)]
 
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
@@ -171,14 +172,14 @@ def drama_list():
 
 @plugin.route('/drama-movie')
 def drama_movie():
-    items = [(plugin.url_for('/filter-select/category/korean-movies'), ListItem('Korean Movies'), True),
-             (plugin.url_for('/filter-select/category/japanese-movies'), ListItem('Japanese Movies'), True),
-             (plugin.url_for('/filter-select/category/taiwanese-movies'), ListItem('Taiwanese Movies'), True),
-             (plugin.url_for('/filter-select/category/hong-kong-movies'), ListItem('Hong Kong Movies'), True),
-             (plugin.url_for('/filter-select/category/chinese-movies'), ListItem('Chinese Movies'), True),
-             (plugin.url_for('/filter-select/category/american-movies'), ListItem('American Movies'), True),
-             (plugin.url_for('/filter-select/category/other-asia-movies'), ListItem('Other Asia Movies'), True),
-             (plugin.url_for('/filter-select/category/thailand-movies'), ListItem('Thailand Movies'), True)]
+    items = [(plugin.url_for('/filter-select/category/korean-movies'), ListItem(localized_str(33300)), True),
+             (plugin.url_for('/filter-select/category/japanese-movies'), ListItem(localized_str(33301)), True),
+             (plugin.url_for('/filter-select/category/taiwanese-movies'), ListItem(localized_str(33302)), True),
+             (plugin.url_for('/filter-select/category/hong-kong-movies'), ListItem(localized_str(33303)), True),
+             (plugin.url_for('/filter-select/category/chinese-movies'), ListItem(localized_str(33304)), True),
+             (plugin.url_for('/filter-select/category/american-movies'), ListItem(localized_str(33305)), True),
+             (plugin.url_for('/filter-select/category/other-asia-movies'), ListItem(localized_str(33306)), True),
+             (plugin.url_for('/filter-select/category/thailand-movies'), ListItem(localized_str(33307)), True)]
 
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
@@ -187,9 +188,9 @@ def drama_movie():
 
 @plugin.route('/filter-select/(?P<path>.+)')
 def filter_select(path):
-    items = [(plugin.url_for('/filter-select-id/char/' + path), ListItem('Filter By Char'), True),
-             (plugin.url_for('/filter-select-id/year/' + path), ListItem('Filter By Year'), True),
-             (plugin.url_for('/filter-select-id/status/' + path), ListItem('Filter By Status'), True)]
+    items = [(plugin.url_for('/filter-select-id/char/' + path), ListItem(localized_str(33400)), True),
+             (plugin.url_for('/filter-select-id/year/' + path), ListItem(localized_str(33401)), True),
+             (plugin.url_for('/filter-select-id/status/' + path), ListItem(localized_str(33402)), True)]
 
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
@@ -281,7 +282,7 @@ def play_episode():
     document = BeautifulSoup(response.text, 'html.parser')
     title = document.find('h1').text.strip()
     all_server = document.find_all('li', {'data-video': True})
-    position = Dialog().select('Choose Server', [server.contents[0] for server in all_server])
+    position = Dialog().select(localized_str(33501), [server.contents[0] for server in all_server])
 
     if position != -1:
         xbmc.executebuiltin('ActivateWindow(busydialognocancel)')
@@ -306,7 +307,7 @@ def play_episode():
             else:
                 raise
         except:
-            Dialog().notification('Couldn\'t Resolve Server', '')
+            Dialog().notification(localized_str(33501), '')
 
         xbmc.executebuiltin('Dialog.Close(busydialognocancel)')
 
