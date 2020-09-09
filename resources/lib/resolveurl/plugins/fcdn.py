@@ -31,7 +31,7 @@ class FcdnResolver(ResolveUrl):
         web_url = self.get_url(host, media_id)
         headers = {'User-Agent': common.FF_USER_AGENT}
         html = self.net.http_POST(web_url, {'d': host}, headers=headers).content
-        sources = [(quality, url.replace('\\/', '/')) for (url, quality) in re.findall(r'"([^"]+)","label":"([^"]+)"', html, re.DOTALL)]
+        sources = [(quality, url.replace('\\/', '/')) for (url, quality) in re.findall(r'"([^"]+)","label":"([^"]+)"', html)]
         if sources:
             headers.update({'verifypeer': 'false'})
             return helpers.pick_source(sources) + helpers.append_headers(headers)
