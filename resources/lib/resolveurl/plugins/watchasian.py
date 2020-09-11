@@ -31,7 +31,7 @@ class WatchAsianResolver(ResolveUrl):
         web_url = self.get_url(host, media_id)
         headers = {'User-Agent': common.FF_USER_AGENT, 'X-Requested-With': 'XMLHttpRequest'}
         html = self.net.http_GET(web_url, headers=headers).content
-        sources = [(quality.upper(), url.replace('\\/', '/')) for (url, quality) in re.findall('"file":"([^"]+)","label":"([^"]+)"', html)]
+        sources = [(quality.upper(), url.replace('\\/', '/')) for (url, quality) in re.findall(r'"source(?:_bk)?":\[{"file":"([^"]+)","label":"([^"]+)"', html)]
         if sources:
             headers.update({'verifypeer': 'false', 'Referer': host})
             return helpers.pick_source(sources) + helpers.append_headers(headers)
