@@ -262,10 +262,10 @@ def list_episode():
     ExternalDatabase.add(plugin.path)
     ExternalDatabase.close()
     response = request(plugin.path)
-    document = BeautifulSoup(response.text, 'html.parser')
+    document = BeautifulSoup(response.text, 'html.parser').find('ul', {'class': 'all-episode'})
     items = []
 
-    for a in document.find('ul', {'class': 'all-episode'}).find_all('a'):
+    for a in reversed(document.find_all('a')):
         item = ListItem('[{}] {}'.format(a.find('span').text, a.find('h3').text.strip('\n ')))
         item.setInfo('video', {})
         item.setProperty('IsPlayable', 'true')
@@ -282,7 +282,7 @@ def play_episode():
     document = BeautifulSoup(response.text, 'html.parser')
     title = document.find('h1').text.strip()
     all_server = document.find_all('li', {'data-video': True})
-    position = Dialog().select(localized_str(33501), [server.contents[0] for server in all_server])
+    position = Dialog().select(localized_str(33500), [server.contents[0] for server in all_server])
 
     if position != -1:
         xbmc.executebuiltin('ActivateWindow(busydialognocancel)')
