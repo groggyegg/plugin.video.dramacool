@@ -99,7 +99,6 @@ def pagination():
                 item.setArt({'poster': li.find('img').attrs['data-original']})
                 item.setInfo('video', {'plot': '' if plot is None else plot.text})
                 items.append((plugin.url_for(li.find('a').attrs['href']), item, True))
-
         elif plugin.path in ('/most-popular-drama', '/search'):
             InternalDatabase.connect()
 
@@ -266,7 +265,7 @@ def list_episode():
     items = []
 
     for a in reversed(document.find_all('a')):
-        item = ListItem('[{}] {}'.format(a.find('span').text, a.find('h3').text.strip('\n ')))
+        item = ListItem('[{}] {}'.format(a.find('span').text, a.find('h3').text.strip('\n ').encode('utf-8')))
         item.setInfo('video', {})
         item.setProperty('IsPlayable', 'true')
         items.append((plugin.url_for(a.attrs['href']), item, False))
