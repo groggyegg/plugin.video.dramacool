@@ -1,13 +1,12 @@
 from bs4 import BeautifulSoup
 from requests import Session
-from rerouting import Rerouting
-from xbmc import Keyboard
 from xbmcaddon import Addon
 from xbmcgui import Dialog, ListItem
 
 import edb
 import idb
 import os
+import plugin
 import re
 import resolveurl
 import xbmc
@@ -18,14 +17,13 @@ __temp__ = os.path.join(xbmc.translatePath(Addon().getAddonInfo('path')), 'resou
 
 domains = ('https://watchasian.net', 'https://www3.dramacool.movie')
 localized_str = Addon().getLocalizedString
-plugin = Rerouting()
 session = Session()
 
 
 @plugin.route('/')
-def index():
-    items = [(plugin.url_for('/search?type=movies&page=1'), ListItem(localized_str(33000)), True),
-             (plugin.url_for('/search?type=stars&page=1'), ListItem(localized_str(33001)), True),
+def _():
+    items = [(plugin.url_for('/search?type=movies'), ListItem(localized_str(33000)), True),
+             (plugin.url_for('/search?type=stars'), ListItem(localized_str(33001)), True),
              (plugin.url_for('/recently-viewed'), ListItem(localized_str(33002)), True),
              (plugin.url_for('/recently-added?page=1'), ListItem(localized_str(33003)), True),
              (plugin.url_for('/recently-added-movie?page=1'), ListItem(localized_str(33004)), True),
@@ -41,36 +39,44 @@ def index():
     xbmcplugin.endOfDirectory(plugin.handle)
 
 
-@plugin.route(r'/recently-viewed(\?delete=(?P<delete>[^&]+))?')
-def recently_viewed(delete=None):
+@plugin.route('/recently-viewed')
+def _():
     edb.connect()
     idb.connect()
+    items = []
 
-    if delete is not None:
-        edb.remove(delete)
-        xbmc.executebuiltin('Container.Refresh')
-    else:
-        items = []
-
-        for path in edb.fetchall():
-            drama = drama_detail(path)
-            item = ListItem(drama['title'])
-            item.addContextMenuItems([
-                (
-                    localized_str(33100),
-                    'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete=' + path + ')'),
-                (localized_str(33101), 'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete=%)')
-            ])
-            item.setArt({'poster': drama.pop('poster')})
-            item.setInfo('video', drama)
-            items.append((plugin.url_for(path), item, True))
-
-        xbmcplugin.setContent(plugin.handle, 'videos')
-        xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
-        xbmcplugin.endOfDirectory(plugin.handle)
+    for path in edb.fetchall():
+        drama = drama_detail(path)
+        item = ListItem(drama['title'])
+        item.addContextMenuItems([
+            (localized_str(33100), 'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete=' + path + ')'),
+            (localized_str(33101), 'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete=%)')])
+        item.setArt({'poster': drama.pop('poster')})
+        item.setInfo('video', drama)
+        items.append((plugin.url_for(path), item, True))
 
     edb.close()
     idb.close()
+    xbmcplugin.setContent(plugin.handle, 'videos')
+    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.endOfDirectory(plugin.handle)
+
+
+@plugin.route(r'/recently-viewed\?delete=(?P<delete>.+)')
+def _(delete):
+    edb.connect()
+    edb.remove(delete)
+    edb.close()
+    xbmc.executebuiltin('Container.Refresh')
+
+
+@plugin.route(r'/search\?type=(movies|stars)')
+def _():
+    keyboard = xbmc.Keyboard()
+    keyboard.doModal()
+
+    if keyboard.isConfirmed():
+        plugin.redirect(plugin.pathquery + '&keyword=' + keyboard.getText() + '&page=1')
 
 
 @plugin.route(r'/list-star.html\?page=[^&]+')
@@ -78,19 +84,9 @@ def recently_viewed(delete=None):
 @plugin.route(r'/recently-added\?page=[^&]+')
 @plugin.route(r'/recently-added-movie\?page=[^&]+')
 @plugin.route(r'/recently-added-kshow\?page=[^&]+')
-@plugin.route(r'/search\?((type=movies|type=stars|page=[^&]+|keyword=[^&]+)&?)+')
-def pagination():
-    if plugin.path == '/search' and 'keyword' not in plugin.query:
-        keyboard = Keyboard()
-        keyboard.doModal()
-
-        if keyboard.isConfirmed():
-            response = request(plugin.pathqs + '&keyword=' + keyboard.getText())
-        else:
-            return
-    else:
-        response = request(plugin.pathqs)
-
+@plugin.route(r'/search\?((type=movies|type=stars|page=[^&]+|keyword=[^&]+)&?)+', order=1)
+def _():
+    response = request(plugin.pathquery)
     document = BeautifulSoup(response.text, 'html.parser').find('ul', {'class': ['list-episode-item', 'list-star']})
     items = []
 
@@ -129,6 +125,7 @@ def pagination():
             for li in document.find_all('li', {'class': ['next', 'previous']}):
                 item = ListItem(localized_str(33600 if li.text == 'Next >' else 33601))
                 items.append((plugin.url_for(plugin.path + li.find('a').attrs['href']), item, True))
+                print('   -----  ' + plugin.url_for(plugin.path + li.find('a').attrs['href']))
 
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
@@ -136,7 +133,7 @@ def pagination():
 
 
 @plugin.route('/star/[^/]+')
-def star():
+def _():
     response = request(plugin.path)
     document = BeautifulSoup(response.text, 'html.parser')
     idb.connect()
@@ -159,7 +156,7 @@ def star():
 
 
 @plugin.route('/drama-list')
-def drama_list():
+def _():
     items = [(plugin.url_for('/filter-select/category/korean-drama'), ListItem(localized_str(33200)), True),
              (plugin.url_for('/filter-select/category/japanese-drama'), ListItem(localized_str(33201)), True),
              (plugin.url_for('/filter-select/category/taiwanese-drama'), ListItem(localized_str(33202)), True),
@@ -174,7 +171,7 @@ def drama_list():
 
 
 @plugin.route('/drama-movie')
-def drama_movie():
+def _():
     items = [(plugin.url_for('/filter-select/category/korean-movies'), ListItem(localized_str(33300)), True),
              (plugin.url_for('/filter-select/category/japanese-movies'), ListItem(localized_str(33301)), True),
              (plugin.url_for('/filter-select/category/taiwanese-movies'), ListItem(localized_str(33302)), True),
@@ -190,7 +187,7 @@ def drama_movie():
 
 
 @plugin.route('/filter-select/(?P<path>.+)')
-def filter_select(path):
+def _(path):
     items = [(plugin.url_for('/filter-select-id/char/' + path), ListItem(localized_str(33400)), True),
              (plugin.url_for('/filter-select-id/year/' + path), ListItem(localized_str(33401)), True),
              (plugin.url_for('/filter-select-id/status/' + path), ListItem(localized_str(33402)), True)]
@@ -201,7 +198,7 @@ def filter_select(path):
 
 
 @plugin.route('/filter-select-id/(?P<select_id>[^/]+)(?P<path>/.+)')
-def filter_select_id(select_id, path):
+def _(select_id, path):
     response = request(path)
     document = BeautifulSoup(response.text, 'html.parser')
     items = []
@@ -224,7 +221,7 @@ def filter_select_id(select_id, path):
 
 
 @plugin.route('/list-select-id/(?P<select_id>[^/]+)/(?P<select_value>[^/]+)(?P<path>/.+)')
-def list_select_id(select_id, select_value, path):
+def _(select_id, select_value, path):
     idb.connect()
     response = request(path)
     document = BeautifulSoup(response.text, 'html.parser')
@@ -262,7 +259,7 @@ def list_select_id(select_id, select_value, path):
 
 
 @plugin.route('/drama-detail/.+')
-def list_episode():
+def _():
     edb.connect()
     edb.add(plugin.path)
     edb.close()
@@ -282,7 +279,7 @@ def list_episode():
 
 
 @plugin.route('/[^/]+.html')
-def play_episode():
+def _():
     response = request(plugin.path)
     document = BeautifulSoup(response.text, 'html.parser')
     title = document.find('h1').text.strip()
