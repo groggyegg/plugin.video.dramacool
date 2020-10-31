@@ -1,11 +1,12 @@
 from bs4 import BeautifulSoup
 from requests import Session
 from rerouting import Rerouting
-from database import ExternalDatabase, InternalDatabase
 from xbmc import Keyboard
 from xbmcaddon import Addon
 from xbmcgui import Dialog, ListItem
 
+import edb
+import idb
 import os
 import re
 import resolveurl
@@ -42,20 +43,22 @@ def index():
 
 @plugin.route(r'/recently-viewed(\?delete=(?P<delete>[^&]+))?')
 def recently_viewed(delete=None):
-    ExternalDatabase.connect()
-    InternalDatabase.connect()
+    edb.connect()
+    idb.connect()
 
     if delete is not None:
-        ExternalDatabase.remove(delete)
+        edb.remove(delete)
         xbmc.executebuiltin('Container.Refresh')
     else:
         items = []
 
-        for path in ExternalDatabase.fetchall():
+        for path in edb.fetchall():
             drama = drama_detail(path)
             item = ListItem(drama['title'])
             item.addContextMenuItems([
-                (localized_str(33100), 'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete=' + path + ')'),
+                (
+                    localized_str(33100),
+                    'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete=' + path + ')'),
                 (localized_str(33101), 'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete=%)')
             ])
             item.setArt({'poster': drama.pop('poster')})
@@ -66,8 +69,8 @@ def recently_viewed(delete=None):
         xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
         xbmcplugin.endOfDirectory(plugin.handle)
 
-    ExternalDatabase.close()
-    InternalDatabase.close()
+    edb.close()
+    idb.close()
 
 
 @plugin.route(r'/list-star.html\?page=[^&]+')
@@ -100,7 +103,7 @@ def pagination():
                 item.setInfo('video', {'plot': '' if plot is None else plot.text})
                 items.append((plugin.url_for(li.find('a').attrs['href']), item, True))
         elif plugin.path in ('/most-popular-drama', '/search'):
-            InternalDatabase.connect()
+            idb.connect()
 
             for a in document.find_all('a'):
                 path = a.attrs['href']
@@ -110,10 +113,11 @@ def pagination():
                 item.setInfo('video', drama)
                 items.append((plugin.url_for(path), item, True))
 
-            InternalDatabase.close()
+            idb.close()
         else:
             for a in document.find_all('a'):
-                item = ListItem(u'[{}] {} {}'.format(a.find('span', {'class': 'type'}).text, a.find('h3').text, a.find('span', {'class': 'ep'}).text))
+                item = ListItem(u'[{}] {} {}'.format(a.find('span', {'class': 'type'}).text, a.find('h3').text,
+                                                     a.find('span', {'class': 'ep'}).text))
                 item.setArt({'poster': a.find('img').attrs['data-original']})
                 item.setInfo('video', {})
                 item.setProperty('IsPlayable', 'true')
@@ -135,7 +139,7 @@ def pagination():
 def star():
     response = request(plugin.path)
     document = BeautifulSoup(response.text, 'html.parser')
-    InternalDatabase.connect()
+    idb.connect()
     items = []
 
     for a in document.find('ul', {'class': 'list-episode-item'}).find_all('a'):
@@ -146,7 +150,7 @@ def star():
         item.setInfo('video', drama)
         items.append((plugin.url_for(path), item, True))
 
-    InternalDatabase.close()
+    idb.close()
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_TITLE)
@@ -206,11 +210,13 @@ def filter_select_id(select_id, path):
         for div in document.find_all('div', {'class': 'list-content'}):
             select_value = div.find('h4').text
             item = ListItem(select_value)
-            items.append((plugin.url_for('/list-select-id/{}/{}{}'.format(select_id, ord(select_value), path)), item, True))
+            items.append(
+                (plugin.url_for('/list-select-id/{}/{}{}'.format(select_id, ord(select_value), path)), item, True))
     else:
         for option in document.find('select', {'id': 'select-{}'.format(select_id)}).find_all('option')[1:]:
             item = ListItem(option.text)
-            items.append((plugin.url_for('/list-select-id/{}/{}{}'.format(select_id, option.attrs['value'], path)), item, True))
+            items.append(
+                (plugin.url_for('/list-select-id/{}/{}{}'.format(select_id, option.attrs['value'], path)), item, True))
 
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
@@ -219,7 +225,7 @@ def filter_select_id(select_id, path):
 
 @plugin.route('/list-select-id/(?P<select_id>[^/]+)/(?P<select_value>[^/]+)(?P<path>/.+)')
 def list_select_id(select_id, select_value, path):
-    InternalDatabase.connect()
+    idb.connect()
     response = request(path)
     document = BeautifulSoup(response.text, 'html.parser')
     items = []
@@ -247,7 +253,7 @@ def list_select_id(select_id, select_value, path):
             item.setInfo('video', drama)
             items.append((plugin.url_for(path), item, True))
 
-    InternalDatabase.close()
+    idb.close()
     xbmcplugin.setContent(plugin.handle, 'videos')
     xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_TITLE)
@@ -257,9 +263,9 @@ def list_select_id(select_id, select_value, path):
 
 @plugin.route('/drama-detail/.+')
 def list_episode():
-    ExternalDatabase.connect()
-    ExternalDatabase.add(plugin.path)
-    ExternalDatabase.close()
+    edb.connect()
+    edb.add(plugin.path)
+    edb.close()
     response = request(plugin.path)
     document = BeautifulSoup(response.text, 'html.parser').find('ul', {'class': 'all-episode'})
     items = []
@@ -312,21 +318,19 @@ def play_episode():
 
 
 def drama_detail(path):
-    drama = InternalDatabase.fetchone(path)
+    drama = idb.fetchone(path)
 
     if drama is None:
         response = request(path)
         document = BeautifulSoup(response.content, 'html.parser')
         element = document.find('div', {'class': 'details'})
         year = document.find('span', text='Released:').find_next_sibling('a').text
-        InternalDatabase.add((path,
-                              element.find('img').attrs['src'],
-                              element.find('h1').text,
-                              element.find('span', text=re.compile('Description:?')).parent.find_next_sibling().text,
-                              document.find('span', text=re.compile('Country: ?')).next_sibling.strip(),
-                              document.find('span', text='Status:').find_next_sibling('a').text,
-                              int(year) if year.isdigit() else None))
-        drama = InternalDatabase.fetchone(path)
+        idb.add((path,
+                 element.find('img').attrs['src'],
+                 element.find('h1').text.strip(),
+                 element.find('span', text=re.compile('Description:?')).parent.find_next_sibling().text.strip(),
+                 int(year) if year.isdigit() else None))
+        drama = idb.fetchone(path)
 
     return drama
 
@@ -340,16 +344,16 @@ def request(path):
 
 
 def create_database():
-    InternalDatabase.connect()
+    idb.connect()
 
-    for path in ['/drama-list', '/kshow']:
+    for path in ['/drama-list']:
         response = request(path)
         document = BeautifulSoup(response.content, 'html.parser')
 
         for li in document.find_all('li', {'class': 'filter-item'}):
             drama_detail(li.find('a').attrs['href'])
 
-    InternalDatabase.close()
+    idb.close()
 
 
 if __name__ == '__main__':
