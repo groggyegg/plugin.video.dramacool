@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 from requests import Session
 from rerouting import Rerouting
-from resources.lib.database import ExternalDatabase, InternalDatabase
+from database import ExternalDatabase, InternalDatabase
 from xbmc import Keyboard
 from xbmcaddon import Addon
 from xbmcgui import Dialog, ListItem
