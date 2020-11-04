@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="plugin.video.dramacool" name="DramaCool" version="1.8.0" provider-name="groggyegg">
     <requires>
-        <import addon="script.module.beautifulsoup4" version="4.6.2"/>
+        <import addon="script.module.lxml" optional="true"/>
         <import addon="script.module.resolveurl" version="5.0.38"/>
         <import addon="script.module.requests" version="2.22.0"/>
         <import addon="xbmc.python" version="2.26.0"/>
