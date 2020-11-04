@@ -1,14 +1,16 @@
 import os
+import request
 import sqlite3
-import xbmc
-import xbmcaddon
+
+try:
+    import xbmc
+    import xbmcaddon
+
+    _database = os.path.join(xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('path')), 'resources/data/drama.db')
+except ImportError:
+    _database = '../data/drama.db'
 
 _connection = None
-_database = os.path.join(xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('path')), 'resources/data/drama.db')
-
-
-def add(values):
-    _connection.execute('INSERT INTO drama VALUES (?, ?, ?, ?, ?)', values)
 
 
 def connect():
@@ -17,7 +19,6 @@ def connect():
     if _connection is None:
         _connection = sqlite3.connect(_database)
         _connection.row_factory = sqlite3.Row
-        create()
 
 
 def close():
@@ -31,20 +32,32 @@ def close():
 
 def create():
     _connection.execute('CREATE TABLE IF NOT EXISTS drama ('
-                        'path TEXT UNIQUE ON CONFLICT IGNORE, '
+                        'path TEXT PRIMARY KEY ON CONFLICT IGNORE, '
                         'poster TEXT, '
                         'title TEXT, '
                         'plot TEXT, '
                         'year INT)')
 
+    cursor = _connection.execute('SELECT path FROM drama')
+    result = {path for (path,) in cursor.fetchall()}
+
+    for path in request.dramalist('/drama-list'):
+        if path not in result:
+            add(path)
+
+
+def add(path):
+    (poster, title, plot, year) = request.dramadetail(path)
+    _connection.execute('INSERT INTO drama VALUES (?, ?, ?, ?, ?)', (path, poster, title, plot, year))
+    return poster, {'title': title, 'plot': plot, 'year': year}
+
 
 def fetchone(path):
-    cursor = _connection.execute('SELECT * FROM drama WHERE path = ?', (path,))
+    cursor = _connection.execute('SELECT poster, title, plot, year FROM drama WHERE path = ?', (path,))
     result = cursor.fetchone()
 
     if result is None:
-        return None
+        return add(path)
     else:
         result = dict(result)
-        result.pop('path')
-        return result
+        return result.pop('poster'), result

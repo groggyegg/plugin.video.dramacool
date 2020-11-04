@@ -49,9 +49,9 @@ def _():
         idb.connect()
 
         for path in dramalist:
-            detail = idb.fetchone(path)
+            (poster, detail) = idb.fetchone(path)
             item = ListItem(detail['title'])
-            item.setArt({'poster': detail.pop('poster')})
+            item.setArt({'poster': poster})
             item.setInfo('video', detail)
             items.append((plugin.url_for(path), item, True))
 
@@ -78,13 +78,13 @@ def _():
     items = []
 
     for path in edb.fetchall():
-        drama = drama_detail(path)
-        item = ListItem(drama['title'])
+        (poster, detail) = idb.fetchone(path)
+        item = ListItem(detail['title'])
         item.addContextMenuItems([
             (_localizedstr(33100), 'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete=' + path + ')'),
             (_localizedstr(33101), 'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete=%)')])
-        item.setArt({'poster': drama.pop('poster')})
-        item.setInfo('video', drama)
+        item.setArt({'poster': poster})
+        item.setInfo('video', detail)
         items.append((plugin.url_for(path), item, True))
 
     edb.close()
@@ -179,10 +179,10 @@ def _(path, selectid, selectvalue):
         dramalist = request.dramalist(path, filteryear='year_' + selectvalue)
 
     for path in dramalist:
-        drama = drama_detail(path)
-        item = ListItem(drama['title'])
-        item.setArt({'poster': drama.pop('poster')})
-        item.setInfo('video', drama)
+        (poster, detail) = idb.fetchone(path)
+        item = ListItem(detail['title'])
+        item.setArt({'poster': poster})
+        item.setInfo('video', detail)
         items.append((plugin.url_for(path), item, True))
 
     idb.close()
@@ -198,9 +198,9 @@ def _():
     items = []
 
     for path in dramalist:
-        detail = idb.fetchone(path)
+        (poster, detail) = idb.fetchone(path)
         item = ListItem(detail['title'])
-        item.setArt({'poster': detail.pop('poster')})
+        item.setArt({'poster': poster})
         item.setInfo('video', detail)
         items.append((plugin.url_for(path), item, True))
 
@@ -236,10 +236,10 @@ def _():
     items = []
 
     for path in request.stardramalist(plugin.path):
-        drama = drama_detail(path)
-        item = ListItem(drama['title'])
-        item.setArt({'poster': drama.pop('poster')})
-        item.setInfo('video', drama)
+        (poster, detail) = idb.fetchone(path)
+        item = ListItem(detail['title'])
+        item.setArt({'poster': poster})
+        item.setInfo('video', detail)
         items.append((plugin.url_for(path), item, True))
 
     idb.close()
@@ -290,26 +290,6 @@ def _():
             Dialog().notification(_localizedstr(33501), '')
 
         xbmc.executebuiltin('Dialog.Close(busydialognocancel)')
-
-
-def drama_detail(path):
-    drama = idb.fetchone(path)
-
-    if drama is None:
-        (poster, title, plot, year) = request.dramadetail(path)
-        idb.add((path, poster, title, plot, year))
-        drama = idb.fetchone(path)
-
-    return drama
-
-
-def create_database():
-    idb.connect()
-
-    for path in request.dramalist('/drama-list'):
-        drama_detail(path)
-
-    idb.close()
 
 
 def show(items):
