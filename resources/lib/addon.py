@@ -18,8 +18,8 @@ _plugins = os.path.join(xbmc.translatePath(_addon.getAddonInfo('path')), 'resour
 
 @plugin.route('/')
 def _():
-    show([(plugin.url_for('/search?type=movies'), ListItem(_localizedstr(33000)), True),
-          (plugin.url_for('/search?type=stars'), ListItem(_localizedstr(33001)), True),
+    show([(plugin.url_for('/search?type=movies'), ListItem(_localizedstr(33000), iconImage='DefaultAddonsSearch.png'), True),
+          (plugin.url_for('/search?type=stars'), ListItem(_localizedstr(33001), iconImage='DefaultAddonsSearch.png'), True),
           (plugin.url_for('/recently-viewed'), ListItem(_localizedstr(33002)), True),
           (plugin.url_for('/recently-added?page=1'), ListItem(_localizedstr(33003)), True),
           (plugin.url_for('/recently-added-movie?page=1'), ListItem(_localizedstr(33004)), True),
@@ -40,7 +40,7 @@ def _():
         plugin.redirect(plugin.pathquery + '&keyword=' + keyboard.getText() + '&page=1')
 
 
-@plugin.route(r'/search\?((type=movies|type=stars|page=[^&]+|keyword=[^&]+)&?)+')
+@plugin.route(r'/search\?((type=movies|type=stars|page=[^&]+|keyword=[^&]+)&?)+', 1)
 def _():
     items = []
 
@@ -80,9 +80,8 @@ def _():
     for path in edb.fetchall():
         (poster, detail) = idb.fetchone(path)
         item = ListItem(detail['title'])
-        item.addContextMenuItems([
-            (_localizedstr(33100), 'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete=' + path + ')'),
-            (_localizedstr(33101), 'RunPlugin(plugin://plugin.video.dramacool/recently-viewed?delete=%)')])
+        item.addContextMenuItems([(_localizedstr(33100), 'RunPlugin(' + plugin.url + '?delete=' + path + ')'),
+                                  (_localizedstr(33101), 'RunPlugin(' + plugin.url + '?delete=%)')])
         item.setArt({'poster': poster})
         item.setInfo('video', detail)
         items.append((plugin.url_for(path), item, True))
@@ -264,10 +263,12 @@ def _():
     show(items)
 
 
-@plugin.route('/[^/]+.html', order=1)
+@plugin.route('/[^/]+.html')
 def _():
     (serverlist, titlelist, title) = request.serverlist(plugin.path)
     position = Dialog().select(_localizedstr(33500), titlelist)
+    item = ListItem(title)
+    url = False
 
     if position != -1:
         xbmc.executebuiltin('ActivateWindow(busydialognocancel)')
@@ -277,19 +278,19 @@ def _():
             url = resolveurl.resolve(serverlist[position])
 
             if url:
-                item = ListItem(title, path=url)
+                item.setPath(url)
                 subtitle = request.subtitle(serverlist[position])
 
                 if subtitle is not None:
                     item.setSubtitles([subtitle])
-
-                xbmcplugin.setResolvedUrl(plugin.handle, True, item)
             else:
-                raise
-        except:
+                Dialog().notification(_localizedstr(33502), '')
+        except resolveurl.resolver.ResolverError:
             Dialog().notification(_localizedstr(33501), '')
 
         xbmc.executebuiltin('Dialog.Close(busydialognocancel)')
+
+    xbmcplugin.setResolvedUrl(plugin.handle, url is not False, item)
 
 
 def show(items):

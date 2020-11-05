@@ -139,6 +139,10 @@ msgctxt "#33501"
 msgid "Couldn't Resolve Server"
 msgstr ""
 
+msgctxt "#33502"
+msgid "Unsupported Server"
+msgstr ""
+
 #: /list-star.html /most-popular-drama /recently-added* /search
 msgctxt "#33600"
 msgid "Next >"

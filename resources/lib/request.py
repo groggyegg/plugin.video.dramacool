@@ -66,13 +66,13 @@ class _DramaDetailParser(Parser):
             self._is_plot = True if 'Description' in data else False
             self._is_year = True if 'Released' in data else False
         elif self._is_title:
-            self._title = data
+            self._title = data.strip()
             self._is_title = False
         elif self._is_plot:
             data = data.strip()
 
             if data:
-                self._plot.append(data)
+                self._plot.append(data.replace('\r\n\r\n', '\r\n'))
         elif self._is_year and data.isdigit():
             self._year = int(data)
 
