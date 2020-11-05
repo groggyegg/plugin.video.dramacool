@@ -177,8 +177,7 @@ def _(path, selectid, selectvalue):
     else:
         dramalist = request.dramalist(path, filteryear='year_' + selectvalue)
 
-    for path in dramalist:
-        (poster, detail) = idb.fetchone(path)
+    for (poster, detail) in idb.fetchmany(dramalist):
         item = ListItem(detail['title'])
         item.setArt({'poster': poster})
         item.setInfo('video', detail)
