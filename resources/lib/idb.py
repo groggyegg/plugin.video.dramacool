@@ -64,13 +64,13 @@ def fetchone(path):
 
 
 def fetchmany(paths):
-    cursor = _connection.execute('SELECT * FROM drama WHERE path IN ({0})'.format(', '.join(['?'] * len(paths))), paths)
-    exists = set()
+    cursor = _connection.execute('SELECT * FROM drama WHERE path IN (%s)' % ', '.join('?' * len(paths)), paths)
+    paths = set(paths)
 
     for result in cursor.fetchall():
         result = dict(result)
-        exists.add(result.pop('path'))
+        paths.discard(result.pop('path'))
         yield result.pop('poster'), result
 
-    for path in set(paths) - exists:
+    for path in paths:
         yield add(path)
