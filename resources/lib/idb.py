@@ -62,7 +62,7 @@ def fetchone(path):
         return poster, {'title': title, 'plot': plot, 'year': year}
 
 
-def fetchmany(paths):
+def fetchall(paths):
     cursor = _connection.execute('SELECT * FROM drama WHERE path IN (%s)' % ', '.join('?' * len(paths)), paths)
     paths = set(paths)
 
@@ -71,5 +71,5 @@ def fetchmany(paths):
         yield path, poster, {'title': title, 'plot': plot, 'year': year}
 
     for path in paths:
-        (poster, labels) = add(path)
-        yield path, poster, labels
+        (poster, info) = add(path)
+        yield path, poster, info

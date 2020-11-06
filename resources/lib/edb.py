@@ -40,9 +40,7 @@ def create():
 
 def fetchall():
     cursor = _connection.execute('SELECT path FROM recently_viewed ORDER BY last_visited DESC')
-
-    for (path,) in cursor.fetchall():
-        yield path
+    return [path for (path,) in cursor.fetchall()]
 
 
 def remove(path):
