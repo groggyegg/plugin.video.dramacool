@@ -145,9 +145,9 @@ msgstr ""
 
 #: /list-star.html /most-popular-drama /recently-added* /search
 msgctxt "#33600"
-msgid "Next >"
+msgid "Next"
 msgstr ""
 
 msgctxt "#33601"
-msgid "< Previous"
+msgid "Previous"
 msgstr ""

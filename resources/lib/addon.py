@@ -18,17 +18,20 @@ _plugins = os.path.join(xbmc.translatePath(_addon.getAddonInfo('path')), 'resour
 
 @plugin.route('/')
 def _():
-    show([(plugin.url_for('/search?type=movies'), ListItem(_localizedstr(33000), iconImage='DefaultAddonsSearch.png'), True),
-          (plugin.url_for('/search?type=stars'), ListItem(_localizedstr(33001), iconImage='DefaultAddonsSearch.png'), True),
-          (plugin.url_for('/recently-viewed'), ListItem(_localizedstr(33002)), True),
-          (plugin.url_for('/recently-added?page=1'), ListItem(_localizedstr(33003)), True),
-          (plugin.url_for('/recently-added-movie?page=1'), ListItem(_localizedstr(33004)), True),
-          (plugin.url_for('/recently-added-kshow?page=1'), ListItem(_localizedstr(33005)), True),
-          (plugin.url_for('/drama-list'), ListItem(_localizedstr(33006)), True),
-          (plugin.url_for('/drama-movie'), ListItem(_localizedstr(33007)), True),
-          (plugin.url_for('/kshow'), ListItem(_localizedstr(33008)), True),
-          (plugin.url_for('/most-popular-drama?page=1'), ListItem(_localizedstr(33009)), True),
-          (plugin.url_for('/list-star.html?page=1'), ListItem(_localizedstr(33010)), True)])
+    items = [(plugin.url_for('/search?type=movies'), ListItem(_localizedstr(33000), iconImage='DefaultAddonsSearch.png'), True),
+             (plugin.url_for('/search?type=stars'), ListItem(_localizedstr(33001), iconImage='DefaultAddonsSearch.png'), True),
+             (plugin.url_for('/recently-viewed'), ListItem(_localizedstr(33002), iconImage='DefaultUser.png'), True),
+             (plugin.url_for('/recently-added?page=1'), ListItem(_localizedstr(33003), iconImage='DefaultRecentlyAddedEpisodes.png'), True),
+             (plugin.url_for('/recently-added-movie?page=1'), ListItem(_localizedstr(33004), iconImage='DefaultRecentlyAddedEpisodes.png'), True),
+             (plugin.url_for('/recently-added-kshow?page=1'), ListItem(_localizedstr(33005), iconImage='DefaultRecentlyAddedEpisodes.png'), True),
+             (plugin.url_for('/drama-list'), ListItem(_localizedstr(33006), iconImage='DefaultTVShows.png'), True),
+             (plugin.url_for('/drama-movie'), ListItem(_localizedstr(33007), iconImage='DefaultTVShows.png'), True),
+             (plugin.url_for('/kshow'), ListItem(_localizedstr(33008), iconImage='DefaultTVShows.png'), True),
+             (plugin.url_for('/most-popular-drama?page=1'), ListItem(_localizedstr(33009), iconImage='DefaultFavourites.png'), True),
+             (plugin.url_for('/list-star.html?page=1'), ListItem(_localizedstr(33010), iconImage='DefaultFavourites.png'), True)]
+
+    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.endOfDirectory(plugin.handle)
 
 
 @plugin.route(r'/search\?type=(movies|stars)')
@@ -65,10 +68,11 @@ def _():
             items.append((plugin.url_for(path), item, True))
 
     for (query, title) in paginationlist:
-        item = ListItem(_localizedstr(33600 if title == 'next' else 33601))
+        item = ListItem(_localizedstr(33600)) if title == 'next' else ListItem(_localizedstr(33601), iconImage='DefaultFolderBack.png')
         items.append((plugin.url_for(plugin.path + query), item, True))
 
-    show(items)
+    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.endOfDirectory(plugin.handle)
 
 
 @plugin.route('/recently-viewed')
@@ -78,17 +82,18 @@ def _():
     items = []
 
     for path in edb.fetchall():
-        (poster, detail) = idb.fetchone(path)
-        item = ListItem(detail['title'])
+        (poster, labels) = idb.fetchone(path)
+        item = ListItem(labels['title'])
         item.addContextMenuItems([(_localizedstr(33100), 'RunPlugin(' + plugin.url + '?delete=' + path + ')'),
                                   (_localizedstr(33101), 'RunPlugin(' + plugin.url + '?delete=%)')])
         item.setArt({'poster': poster})
-        item.setInfo('video', detail)
+        item.setInfo('video', labels)
         items.append((plugin.url_for(path), item, True))
 
     edb.close()
     idb.close()
-    show(items)
+    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.endOfDirectory(plugin.handle)
 
 
 @plugin.route(r'/recently-viewed\?delete=(?P<delete>.+)')
@@ -114,41 +119,51 @@ def _():
         items.append((plugin.url_for(path), item, False))
 
     for (query, title) in paginationlist:
-        item = ListItem(_localizedstr(33600 if title == 'next' else 33601))
+        item = ListItem(_localizedstr(33600)) if title == 'next' else ListItem(_localizedstr(33601), iconImage='DefaultFolderBack.png')
         items.append((plugin.url_for(plugin.path + query), item, True))
 
-    show(items)
+    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.endOfDirectory(plugin.handle)
 
 
 @plugin.route('/drama-list')
 def _():
-    show([(plugin.url_for('/category/korean-drama'), ListItem(_localizedstr(33200)), True),
-          (plugin.url_for('/category/japanese-drama'), ListItem(_localizedstr(33201)), True),
-          (plugin.url_for('/category/taiwanese-drama'), ListItem(_localizedstr(33202)), True),
-          (plugin.url_for('/category/hong-kong-drama'), ListItem(_localizedstr(33203)), True),
-          (plugin.url_for('/category/chinese-drama'), ListItem(_localizedstr(33204)), True),
-          (plugin.url_for('/category/other-asia-drama'), ListItem(_localizedstr(33205)), True),
-          (plugin.url_for('/category/thailand-drama'), ListItem(_localizedstr(33206)), True)])
+    items = [(plugin.url_for('/category/korean-drama'), ListItem(_localizedstr(33200)), True),
+             (plugin.url_for('/category/japanese-drama'), ListItem(_localizedstr(33201)), True),
+             (plugin.url_for('/category/taiwanese-drama'), ListItem(_localizedstr(33202)), True),
+             (plugin.url_for('/category/hong-kong-drama'), ListItem(_localizedstr(33203)), True),
+             (plugin.url_for('/category/chinese-drama'), ListItem(_localizedstr(33204)), True),
+             (plugin.url_for('/category/other-asia-drama'), ListItem(_localizedstr(33205)), True),
+             (plugin.url_for('/category/thailand-drama'), ListItem(_localizedstr(33206)), True)]
+
+    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.endOfDirectory(plugin.handle)
 
 
 @plugin.route('/drama-movie')
 def _():
-    show([(plugin.url_for('/category/korean-movies'), ListItem(_localizedstr(33300)), True),
-          (plugin.url_for('/category/japanese-movies'), ListItem(_localizedstr(33301)), True),
-          (plugin.url_for('/category/taiwanese-movies'), ListItem(_localizedstr(33302)), True),
-          (plugin.url_for('/category/hong-kong-movies'), ListItem(_localizedstr(33303)), True),
-          (plugin.url_for('/category/chinese-movies'), ListItem(_localizedstr(33304)), True),
-          (plugin.url_for('/category/american-movies'), ListItem(_localizedstr(33305)), True),
-          (plugin.url_for('/category/other-asia-movies'), ListItem(_localizedstr(33306)), True),
-          (plugin.url_for('/category/thailand-movies'), ListItem(_localizedstr(33307)), True)])
+    items = [(plugin.url_for('/category/korean-movies'), ListItem(_localizedstr(33300)), True),
+             (plugin.url_for('/category/japanese-movies'), ListItem(_localizedstr(33301)), True),
+             (plugin.url_for('/category/taiwanese-movies'), ListItem(_localizedstr(33302)), True),
+             (plugin.url_for('/category/hong-kong-movies'), ListItem(_localizedstr(33303)), True),
+             (plugin.url_for('/category/chinese-movies'), ListItem(_localizedstr(33304)), True),
+             (plugin.url_for('/category/american-movies'), ListItem(_localizedstr(33305)), True),
+             (plugin.url_for('/category/other-asia-movies'), ListItem(_localizedstr(33306)), True),
+             (plugin.url_for('/category/thailand-movies'), ListItem(_localizedstr(33307)), True)]
+
+    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.endOfDirectory(plugin.handle)
 
 
 @plugin.route('/category/[^/]+')
 @plugin.route('/kshow')
 def _():
-    show([(plugin.url_for(plugin.path + '/char'), ListItem(_localizedstr(33400)), True),
-          (plugin.url_for(plugin.path + '/year'), ListItem(_localizedstr(33401)), True),
-          (plugin.url_for(plugin.path + '/status'), ListItem(_localizedstr(33402)), True)])
+    items = [(plugin.url_for(plugin.path + '/char'), ListItem(_localizedstr(33400)), True),
+             (plugin.url_for(plugin.path + '/year'), ListItem(_localizedstr(33401)), True),
+             (plugin.url_for(plugin.path + '/status'), ListItem(_localizedstr(33402)), True)]
+
+    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.endOfDirectory(plugin.handle)
 
 
 @plugin.route('(?P<path>/category/[^/]+)/(?P<selectid>[^/]+)')
@@ -160,7 +175,8 @@ def _(path, selectid):
         item = ListItem(selectvalue)
         items.append((plugin.url_for(plugin.path + '/' + base64.b64encode(selectvalue).decode('ascii')), item, True))
 
-    show(items)
+    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.endOfDirectory(plugin.handle)
 
 
 @plugin.route('(?P<path>/category/[^/]+)/(?P<selectid>[^/]+)/(?P<selectvalue>[^/]+)')
@@ -177,16 +193,17 @@ def _(path, selectid, selectvalue):
     else:
         dramalist = request.dramalist(path, filteryear='year_' + selectvalue)
 
-    for (poster, detail) in idb.fetchmany(dramalist):
-        item = ListItem(detail['title'])
+    for (path, poster, labels) in idb.fetchmany(dramalist):
+        item = ListItem(labels['title'])
         item.setArt({'poster': poster})
-        item.setInfo('video', detail)
+        item.setInfo('video', labels)
         items.append((plugin.url_for(path), item, True))
 
     idb.close()
+    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_TITLE)
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_VIDEO_YEAR)
-    show(items)
+    xbmcplugin.endOfDirectory(plugin.handle)
 
 
 @plugin.route(r'/most-popular-drama\?page=[^&]+')
@@ -196,18 +213,19 @@ def _():
     items = []
 
     for path in dramalist:
-        (poster, detail) = idb.fetchone(path)
-        item = ListItem(detail['title'])
+        (poster, labels) = idb.fetchone(path)
+        item = ListItem(labels['title'])
         item.setArt({'poster': poster})
-        item.setInfo('video', detail)
+        item.setInfo('video', labels)
         items.append((plugin.url_for(path), item, True))
 
     for (query, title) in paginationlist:
-        item = ListItem(_localizedstr(33600 if title == 'next' else 33601))
+        item = ListItem(_localizedstr(33600)) if title == 'next' else ListItem(_localizedstr(33601), iconImage='DefaultFolderBack.png')
         items.append((plugin.url_for(plugin.path + query), item, True))
 
     idb.close()
-    show(items)
+    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.endOfDirectory(plugin.handle)
 
 
 @plugin.route(r'/list-star.html\?page=[^&]+')
@@ -222,10 +240,11 @@ def _():
         items.append((plugin.url_for(path), item, True))
 
     for (query, title) in paginationlist:
-        item = ListItem(_localizedstr(33600 if title == 'next' else 33601))
+        item = ListItem(_localizedstr(33600)) if title == 'next' else ListItem(_localizedstr(33601), iconImage='DefaultFolderBack.png')
         items.append((plugin.url_for(plugin.path + query), item, True))
 
-    show(items)
+    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.endOfDirectory(plugin.handle)
 
 
 @plugin.route('/star/[^/]+')
@@ -234,19 +253,20 @@ def _():
     items = []
 
     for path in request.stardramalist(plugin.path):
-        (poster, detail) = idb.fetchone(path)
-        item = ListItem(detail['title'])
+        (poster, labels) = idb.fetchone(path)
+        item = ListItem(labels['title'])
         item.setArt({'poster': poster})
-        item.setInfo('video', detail)
+        item.setInfo('video', labels)
         items.append((plugin.url_for(path), item, True))
 
     idb.close()
+    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_TITLE)
     xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_VIDEO_YEAR)
-    show(items)
+    xbmcplugin.endOfDirectory(plugin.handle)
 
 
-@plugin.route('/drama-detail/.+')
+@plugin.route('/drama-detail/[^/]+')
 def _():
     edb.connect()
     edb.add(plugin.path)
@@ -259,10 +279,12 @@ def _():
         item.setProperty('IsPlayable', 'true')
         items.append((plugin.url_for(path), item, False))
 
-    show(items)
+    xbmcplugin.setContent(plugin.handle, 'episodes')
+    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
+    xbmcplugin.endOfDirectory(plugin.handle)
 
 
-@plugin.route('/[^/]+.html')
+@plugin.route('/[^/]+.html', 1)
 def _():
     (serverlist, titlelist, title) = request.serverlist(plugin.path)
     position = Dialog().select(_localizedstr(33500), titlelist)
@@ -290,12 +312,6 @@ def _():
         xbmc.executebuiltin('Dialog.Close(busydialognocancel)')
 
     xbmcplugin.setResolvedUrl(plugin.handle, url is not False, item)
-
-
-def show(items):
-    xbmcplugin.setContent(plugin.handle, 'videos')
-    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
-    xbmcplugin.endOfDirectory(plugin.handle)
 
 
 if __name__ == '__main__':

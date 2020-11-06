@@ -18,7 +18,6 @@ def connect():
 
     if _connection is None:
         _connection = sqlite3.connect(_database)
-        _connection.row_factory = sqlite3.Row
 
 
 def close():
@@ -59,18 +58,18 @@ def fetchone(path):
     if result is None:
         return add(path)
     else:
-        result = dict(result)
-        return result.pop('poster'), result
+        (poster, title, plot, year) = result
+        return poster, {'title': title, 'plot': plot, 'year': year}
 
 
 def fetchmany(paths):
     cursor = _connection.execute('SELECT * FROM drama WHERE path IN (%s)' % ', '.join('?' * len(paths)), paths)
     paths = set(paths)
 
-    for result in cursor.fetchall():
-        result = dict(result)
-        paths.discard(result.pop('path'))
-        yield result.pop('poster'), result
+    for (path, poster, title, plot, year) in cursor.fetchall():
+        paths.discard(path)
+        yield path, poster, {'title': title, 'plot': plot, 'year': year}
 
     for path in paths:
-        yield add(path)
+        (poster, labels) = add(path)
+        yield path, poster, labels
