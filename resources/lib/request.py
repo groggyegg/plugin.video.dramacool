@@ -1,15 +1,8 @@
 import os
 import re
-
 import requests
-
-try:
-    import xbmc
-    import xbmcaddon
-
-    _tempfile = os.path.join(xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('path')), 'resources/data/tempfile')
-except ImportError:
-    pass
+import xbmc
+import xbmcaddon
 
 try:
     import lxml.etree
@@ -43,6 +36,7 @@ except ImportError:
 
 _domains = ('https://watchasian.net', 'https://dramacool.so')
 _session = requests.Session()
+_tempfile = os.path.join(xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('path')), 'resources/data/tempfile')
 
 
 class _DramaDetailParser(Parser):

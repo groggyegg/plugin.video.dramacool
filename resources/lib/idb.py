@@ -1,17 +1,12 @@
 import os
 import request
 import sqlite3
-
-try:
-    import xbmc
-    import xbmcaddon
-
-    _database = os.path.join(xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('path')), 'resources/data/drama.db')
-except ImportError:
-    _database = '../data/drama.db'
+import xbmc
+import xbmcaddon
 
 _SQLITE_MAX_VARIABLE_NUMBER = 999
 _connection = None
+_database = os.path.join(xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('path')), 'resources/data/drama.db')
 
 
 def connect():

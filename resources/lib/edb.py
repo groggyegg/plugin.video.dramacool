@@ -34,7 +34,7 @@ def close():
 
 def create():
     _connection.execute('CREATE TABLE IF NOT EXISTS recently_viewed ('
-                        'path TEXT UNIQUE ON CONFLICT REPLACE, '
+                        'path TEXT PRIMARY KEY ON CONFLICT REPLACE, '
                         'last_visited DATETIME DEFAULT CURRENT_TIMESTAMP)')
 
 
