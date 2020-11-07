@@ -10,6 +10,7 @@ try:
 except ImportError:
     _database = '../data/drama.db'
 
+_SQLITE_MAX_VARIABLE_NUMBER = 999
 _connection = None
 
 
@@ -62,14 +63,17 @@ def fetchone(path):
         return poster, {'title': title, 'plot': plot, 'year': year}
 
 
-def fetchall(paths):
-    cursor = _connection.execute('SELECT * FROM drama WHERE path IN (%s)' % ', '.join('?' * len(paths)), paths)
-    paths = set(paths)
+def fetchall(pathlist):
+    pathset = set(pathlist)
 
-    for (path, poster, title, plot, year) in cursor.fetchall():
-        paths.discard(path)
-        yield path, poster, {'title': title, 'plot': plot, 'year': year}
+    for i in range(0, len(pathlist), _SQLITE_MAX_VARIABLE_NUMBER):
+        pathchunk = pathlist[i:i + _SQLITE_MAX_VARIABLE_NUMBER]
+        cursor = _connection.execute('SELECT * FROM drama WHERE path IN (%s)' % ', '.join('?' * len(pathchunk)), pathchunk)
 
-    for path in paths:
+        for (path, poster, title, plot, year) in cursor.fetchall():
+            pathset.discard(path)
+            yield path, poster, {'title': title, 'plot': plot, 'year': year}
+
+    for path in pathset:
         (poster, info) = add(path)
         yield path, poster, info
