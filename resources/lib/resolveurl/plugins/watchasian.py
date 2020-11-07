@@ -1,5 +1,5 @@
 """
-    Plugin for ResolveURL
+    Plugin for ResolveUrl
     Copyright (C) 2020 groggyegg
 
     This program is free software: you can redistribute it and/or modify
@@ -9,17 +9,17 @@
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import re
 from resolveurl.plugins.lib import helpers
 from resolveurl import common
-from resolveurl.resolver import ResolveUrl, ResolverError
+from resolveurl.resolver import ResolveUrl
 
 
 class WatchAsianResolver(ResolveUrl):
@@ -28,14 +28,11 @@ class WatchAsianResolver(ResolveUrl):
     pattern = r'(?://|\.)(embed\.(?:watchasian\.to|dramacool\.movie))/(?:[a-zA-Z]+).php\?(.+)'
 
     def get_media_url(self, host, media_id):
-        web_url = self.get_url(host, media_id)
-        headers = {'User-Agent': common.FF_USER_AGENT, 'X-Requested-With': 'XMLHttpRequest'}
-        html = self.net.http_GET(web_url, headers=headers).content
-        sources = [(quality.upper(), url.replace('\\/', '/')) for (url, quality) in re.findall(r'"source(?:_bk)?":\[{"file":"([^"]+)","label":"([^"]+)"', html)]
-        if sources:
-            headers.update({'verifypeer': 'false', 'Referer': host})
-            return helpers.pick_source(sources) + helpers.append_headers(headers)
-        raise ResolverError('Video cannot be located.')
+        headers = {'User-Agent': common.RAND_UA, 'X-Requested-With': 'XMLHttpRequest'}
+        html = self.net.http_GET(self.get_url(host, media_id), headers=headers).content
+        sources = [(label, url.replace('\\/', '/')) for (url, label) in re.findall(r'"source(?:_bk)?":\[{"file":"([^"]+)","label":"([^"]+)"', html)]
+        headers.update({'Referer': host})
+        return helpers.pick_source(sources) + helpers.append_headers(headers)
 
     def get_url(self, host, media_id):
         return self._default_get_url(host, media_id, template='https://{host}/ajax.php?{media_id}')
