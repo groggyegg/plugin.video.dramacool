@@ -34,7 +34,7 @@ except ImportError:
         target.feed(text)
         return target.close()
 
-_domains = ('https://watchasian.net', 'https://dramacool.so')
+_domains = ('https://watchasian.cc', 'https://dramacool.so')
 _session = requests.Session()
 _tempfile = os.path.join(xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('path')), 'resources/data/tempfile')
 

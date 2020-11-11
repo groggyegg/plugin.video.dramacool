@@ -24,8 +24,8 @@ from resolveurl.resolver import ResolveUrl
 
 class WatchAsianResolver(ResolveUrl):
     name = "watchasian"
-    domains = ['embed.watchasian.to', 'embed.dramacool.movie']
-    pattern = r'(?://|\.)(embed\.(?:watchasian\.to|dramacool\.movie))/(?:[a-zA-Z]+).php\?(.+)'
+    domains = ['embed.watchasian.cc']
+    pattern = r'(?://|\.)(embed\.watchasian\.\w+)/\w+\.php\?(.+)'
 
     def get_media_url(self, host, media_id):
         headers = {'User-Agent': common.RAND_UA, 'X-Requested-With': 'XMLHttpRequest'}
