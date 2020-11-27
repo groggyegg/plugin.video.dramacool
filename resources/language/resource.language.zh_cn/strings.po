@@ -1,0 +1,154 @@
+msgid ""
+msgstr ""
+
+msgctxt "#33000"
+msgid "Search Drama"
+msgstr "搜索戲劇"
+
+msgctxt "#33001"
+msgid "Search Star"
+msgstr "搜索明星"
+
+msgctxt "#33002"
+msgid "Recently Viewed"
+msgstr "最近瀏覽過的"
+
+msgctxt "#33003"
+msgid "Recently Added Drama"
+msgstr "最近新增的戲劇"
+
+msgctxt "#33004"
+msgid "Recently Added Movie"
+msgstr "最近新增的電影"
+
+msgctxt "#33005"
+msgid "Recently Added KShow"
+msgstr "最近新增的韩国節目"
+
+msgctxt "#33006"
+msgid "Drama List"
+msgstr "戲劇情清單"
+
+msgctxt "#33007"
+msgid "Drama Movie"
+msgstr "戲劇電影"
+
+msgctxt "#33008"
+msgid "KShow"
+msgstr "韩国節目"
+
+msgctxt "#33009"
+msgid "Popular Drama"
+msgstr "熱門戲劇"
+
+msgctxt "#33010"
+msgid "Popular Star"
+msgstr "熱門明星"
+
+msgctxt "#33100"
+msgid "Remove"
+msgstr ""
+
+msgctxt "#33101"
+msgid "Remove All"
+msgstr ""
+
+msgctxt "#33200"
+msgid "Korean Drama"
+msgstr ""
+
+msgctxt "#33201"
+msgid "Japanese Drama"
+msgstr ""
+
+msgctxt "#33202"
+msgid "Taiwanese Drama"
+msgstr ""
+
+msgctxt "#33203"
+msgid "Hong Kong Drama"
+msgstr ""
+
+msgctxt "#33204"
+msgid "Chinese Drama"
+msgstr ""
+
+msgctxt "#33205"
+msgid "Other Asia Drama"
+msgstr ""
+
+msgctxt "#33206"
+msgid "Thailand Drama"
+msgstr ""
+
+msgctxt "#33300"
+msgid "Korean Movies"
+msgstr ""
+
+msgctxt "#33301"
+msgid "Japanese Movies"
+msgstr ""
+
+msgctxt "#33302"
+msgid "Taiwanese Movies"
+msgstr ""
+
+msgctxt "#33303"
+msgid "Hong Kong Movies"
+msgstr ""
+
+msgctxt "#33304"
+msgid "Chinese Movies"
+msgstr ""
+
+msgctxt "#33305"
+msgid "American Movies"
+msgstr ""
+
+msgctxt "#33306"
+msgid "Other Asia Movies"
+msgstr ""
+
+msgctxt "#33307"
+msgid "Thailand Movies"
+msgstr ""
+
+msgctxt "#33400"
+msgid "Filter By Char"
+msgstr ""
+
+msgctxt "#33401"
+msgid "Filter By Genre"
+msgstr ""
+
+msgctxt "#33402"
+msgid "Filter By Status"
+msgstr ""
+
+msgctxt "#33403"
+msgid "Filter By Year"
+msgstr ""
+
+msgctxt "#33500"
+msgid "Choose Server"
+msgstr ""
+
+msgctxt "#33501"
+msgid "Couldn't Resolve Server"
+msgstr ""
+
+msgctxt "#33502"
+msgid "Unsupported Server"
+msgstr ""
+
+msgctxt "#33503"
+msgid "Couldn't Download Subtitle"
+msgstr ""
+
+msgctxt "#33600"
+msgid "Next >"
+msgstr ""
+
+msgctxt "#33601"
+msgid "< Previous"
+msgstr ""
