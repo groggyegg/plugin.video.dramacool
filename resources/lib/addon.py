@@ -278,7 +278,10 @@ def _():
                 subtitle = request.subtitle(serverlist[position])
 
                 if subtitle is not None:
-                    item.setSubtitles([subtitle])
+                    if isinstance(subtitle, int):
+                        Dialog().notification(_addon.getLocalizedString(subtitle), '')
+                    else:
+                        item.setSubtitles([subtitle])
             else:
                 Dialog().notification(_addon.getLocalizedString(33502), '')
         except resolveurl.resolver.ResolverError:

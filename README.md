@@ -24,6 +24,6 @@ A video add-on for kodi that let you stream content from dramacool with english 
 - KShow
 
 ## Feature Roadmap
-- [ ] Python 3 Support (Kodi v19 Matrix)
-- [ ] Genre Filter
+- [x] ~~Python 3 Support (Kodi v19 Matrix)~~
+- [x] ~~Genre Filter~~
 - [ ] Additional Language Support

@@ -141,6 +141,10 @@ msgctxt "#33502"
 msgid "Unsupported Server"
 msgstr ""
 
+msgctxt "#33503"
+msgid "Couldn't Download Subtitle"
+msgstr ""
+
 msgctxt "#33600"
 msgid "Next >"
 msgstr ""

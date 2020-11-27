@@ -4,7 +4,7 @@ import requests
 import xbmcaddon
 import xbmcvfs
 
-_domains = ('https://watchasian.cc', 'https://dramacool.so', 'https://embed.watchasian.to')
+_domains = ('https://watchasian.cc', 'https://dramacool.so', 'https://embed.watchasian.cc')
 _session = requests.Session()
 _tempfile = os.path.join(xbmcvfs.translatePath(xbmcaddon.Addon().getAddonInfo('path')), 'resources/data/tempfile')
 
@@ -23,12 +23,17 @@ def subtitle(url):
     match = re.search('&sub=([^&]+)', url)
 
     if match:
-        webvtt = get(f'/player/sub/index.php?id={match.group(1)}').replace('\ufeffWEBVTT\r\n\r\n', '', 1).split('\r\n\r\n')
+        text = get(f'/player/sub/index.php?id={match.group(1)}')
 
-        with open(_tempfile, 'w') as o:
-            for counter, text in enumerate(webvtt, start=1):
-                o.write(f'{counter}\r\n{text}\r\n\r\n')
+        if text is not None:
+            webvtt = text.replace('\ufeffWEBVTT\r\n\r\n', '', 1).split('\r\n\r\n')
 
-            return _tempfile
+            with open(_tempfile, 'w') as o:
+                for counter, text in enumerate(webvtt, start=1):
+                    o.write(f'{counter}\r\n{text}\r\n\r\n')
+
+                return _tempfile
+
+        return 33503
 
     return None
