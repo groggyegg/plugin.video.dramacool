@@ -1,7 +1,6 @@
 msgid ""
 msgstr ""
 
-#: /
 msgctxt "#33000"
 msgid "Search Drama"
 msgstr ""
@@ -46,7 +45,6 @@ msgctxt "#33010"
 msgid "Popular Star"
 msgstr ""
 
-#: /recently-viewed
 msgctxt "#33100"
 msgid "Remove"
 msgstr ""
@@ -55,7 +53,6 @@ msgctxt "#33101"
 msgid "Remove All"
 msgstr ""
 
-#: /drama-list
 msgctxt "#33200"
 msgid "Korean Drama"
 msgstr ""
@@ -84,7 +81,6 @@ msgctxt "#33206"
 msgid "Thailand Drama"
 msgstr ""
 
-#: /drama-movie
 msgctxt "#33300"
 msgid "Korean Movies"
 msgstr ""
@@ -117,20 +113,22 @@ msgctxt "#33307"
 msgid "Thailand Movies"
 msgstr ""
 
-#: /filter-select/
 msgctxt "#33400"
 msgid "Filter By Char"
 msgstr ""
 
 msgctxt "#33401"
-msgid "Filter By Year"
+msgid "Filter By Genre"
 msgstr ""
 
 msgctxt "#33402"
 msgid "Filter By Status"
 msgstr ""
 
-#: /*.html
+msgctxt "#33403"
+msgid "Filter By Year"
+msgstr ""
+
 msgctxt "#33500"
 msgid "Choose Server"
 msgstr ""
@@ -143,7 +141,6 @@ msgctxt "#33502"
 msgid "Unsupported Server"
 msgstr ""
 
-#: /list-star.html /most-popular-drama /recently-added* /search
 msgctxt "#33600"
 msgid "Next >"
 msgstr ""

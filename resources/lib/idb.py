@@ -1,12 +1,13 @@
 import os
+import parser
 import request
 import sqlite3
-import xbmc
 import xbmcaddon
+import xbmcvfs
 
 _SQLITE_MAX_VARIABLE_NUMBER = 999
 _connection = None
-_database = os.path.join(xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('path')), 'resources/data/drama.db')
+_database = os.path.join(xbmcvfs.translatePath(xbmcaddon.Addon().getAddonInfo('path')), 'resources/data/drama.db')
 
 
 def connect():
@@ -36,13 +37,13 @@ def create():
     cursor = _connection.execute('SELECT path FROM drama')
     result = {path for (path,) in cursor.fetchall()}
 
-    for path in request.dramalist('/drama-list'):
+    for path in parser.DramaListParser().parse(request.get('/drama-list')):
         if path not in result:
             add(path)
 
 
 def add(path):
-    (poster, title, plot, year) = request.dramadetail(path)
+    (poster, title, plot, year) = parser.DramaDetailParser().parse(request.get(path))
     _connection.execute('INSERT INTO drama VALUES (?, ?, ?, ?, ?)', (path, poster, title, plot, year))
     return poster, {'title': title, 'plot': plot, 'year': year}
 

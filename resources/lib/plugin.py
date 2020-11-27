@@ -1,7 +1,8 @@
+from re import fullmatch
+
 import collections
-import re
 import sys
-import urlparse
+import urllib.parse
 
 handle = int(sys.argv[1])
 path = None
@@ -19,7 +20,7 @@ def redirect(pathquerystring):
     for routes in _routedict.values():
         for (function, patterns) in routes.items():
             for pattern in patterns:
-                match = re.match(pattern, pathquery)
+                match = fullmatch(pattern, pathquery)
 
                 if match is not None:
                     function(**match.groupdict())
@@ -27,8 +28,6 @@ def redirect(pathquerystring):
 
 
 def route(pattern, order=0):
-    pattern = '^' + pattern + '$'
-
     if order not in _routedict:
         _routedict[order] = {}
 
@@ -56,7 +55,7 @@ def _url_parse(urlstring):
     global _domain, path, pathquery, query, url
 
     url = urlstring
-    (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
-    pathquery = path + ('?' + query if query else '')
-    query = urlparse.parse_qs(query)
-    _domain = scheme + '://' + netloc
+    (scheme, netloc, path, params, query, fragment) = urllib.parse.urlparse(url)
+    pathquery = path + (f'?{query}' if query else '')
+    query = urllib.parse.parse_qs(query)
+    _domain = f'{scheme}://{netloc}'

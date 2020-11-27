@@ -1,9 +1,9 @@
 import os
 import sqlite3
-import xbmc
 import xbmcaddon
+import xbmcvfs
 
-_profile = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile'))
+_profile = xbmcvfs.translatePath(xbmcaddon.Addon().getAddonInfo('profile'))
 _connection = None
 _database = os.path.join(_profile, 'recently_viewed.db')
 
