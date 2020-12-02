@@ -245,9 +245,6 @@ def _():
 
 @plugin.route('/drama-detail/[^/]+')
 def _():
-    edb.connect()
-    edb.add(plugin.path)
-    edb.close()
     items = []
 
     for (path, title) in parser.EpisodeListParser().parse(request.get(plugin.path)):
@@ -261,7 +258,7 @@ def _():
 
 @plugin.route('/[^/]+.html', 1)
 def _():
-    (serverlist, titlelist, title) = parser.ServerListParser().parse(request.get(plugin.path))
+    (path, serverlist, titlelist, title) = parser.ServerListParser().parse(request.get(plugin.path))
     position = Dialog().select(_addon.getLocalizedString(33500), titlelist)
     item = ListItem(title)
     url = False
@@ -274,6 +271,9 @@ def _():
             url = resolveurl.resolve(serverlist[position])
 
             if url:
+                edb.connect()
+                edb.add(path)
+                edb.close()
                 item.setPath(url)
                 subtitle = request.subtitle(serverlist[position])
 

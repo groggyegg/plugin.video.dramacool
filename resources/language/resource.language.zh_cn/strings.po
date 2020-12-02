@@ -10,8 +10,8 @@ msgid "Search Star"
 msgstr "搜索明星"
 
 msgctxt "#33002"
-msgid "Recently Viewed"
-msgstr "最近瀏覽過的"
+msgid "Recently Watched"
+msgstr "最近看過"
 
 msgctxt "#33003"
 msgid "Recently Added Drama"

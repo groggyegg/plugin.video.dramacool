@@ -10,7 +10,7 @@ msgid "Search Star"
 msgstr ""
 
 msgctxt "#33002"
-msgid "Recently Viewed"
+msgid "Recently Watched"
 msgstr ""
 
 msgctxt "#33003"
