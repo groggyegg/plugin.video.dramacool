@@ -275,16 +275,15 @@ def _():
                 edb.add(path)
                 edb.close()
                 item.setPath(url)
-                subtitle = request.subtitle(serverlist[position])
+                (subtitle, errorcode) = request.subtitle(serverlist[position])
 
-                if subtitle is not None:
-                    if isinstance(subtitle, int):
-                        Dialog().notification(_addon.getLocalizedString(subtitle), '')
-                    else:
-                        item.setSubtitles([subtitle])
+                if errorcode:
+                    Dialog().notification(_addon.getLocalizedString(errorcode), '')
+                elif subtitle is not None:
+                    item.setSubtitles([subtitle])
             else:
                 Dialog().notification(_addon.getLocalizedString(33502), '')
-        except resolveurl.resolver.ResolverError:
+        except:
             Dialog().notification(_addon.getLocalizedString(33501), '')
 
         xbmc.executebuiltin('Dialog.Close(busydialognocancel)')

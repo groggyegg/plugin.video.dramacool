@@ -32,8 +32,8 @@ def subtitle(url):
                 for counter, text in enumerate(webvtt, start=1):
                     o.write(f'{counter}\r\n{text}\r\n\r\n')
 
-                return _tempfile
+                return _tempfile, 0
 
-        return 33503
+        return None, 33503
 
-    return None
+    return None, 0
