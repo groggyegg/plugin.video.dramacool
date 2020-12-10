@@ -270,11 +270,9 @@ def _():
                 edb.add(path)
                 edb.close()
                 item.setPath(url)
-                (subtitle, errorcode) = request.subtitle(serverlist[position])
+                subtitle = request.subtitle(serverlist[position])
 
-                if errorcode:
-                    Dialog().notification(_addon.getLocalizedString(errorcode), '')
-                elif subtitle is not None:
+                if subtitle:
                     item.setSubtitles([subtitle])
             else:
                 Dialog().notification(_addon.getLocalizedString(33502), '')

@@ -2,6 +2,7 @@ from importlib import import_module
 from inspect import isclass
 from pathlib import Path
 from pkgutil import iter_modules
+from xbmcgui import Dialog
 
 import os
 import re
@@ -38,10 +39,11 @@ except ImportError:
             self.feed(text)
             return self.close()
 
+_addon = xbmcaddon.Addon()
 _domains = ('https://watchasian.cc', 'https://dramacool.so', 'https://embed.watchasian.cc')
 _parserdict = {}
 _session = requests.Session()
-_tempfile = os.path.join(xbmcvfs.translatePath(xbmcaddon.Addon().getAddonInfo('path')), 'resources/data/tempfile')
+_tempfile = os.path.join(xbmcvfs.translatePath(_addon.getAddonInfo('path')), 'resources/data/tempfile')
 
 for module_info in iter_modules([Path(__file__).parent]):
     module = import_module(f"{__name__}.{module_info.name}")
@@ -73,15 +75,13 @@ def subtitle(url):
     if match:
         text = get(f'/player/sub/index.php?id={match.group(1)}')
 
-        if text is not None:
+        if text:
             webvtt = text.replace('\ufeffWEBVTT\r\n\r\n', '', 1).split('\r\n\r\n')
 
             with open(_tempfile, 'w') as o:
                 for counter, text in enumerate(webvtt, start=1):
                     o.write(f'{counter}\r\n{text}\r\n\r\n')
 
-                return _tempfile, 0
-
-        return None, 33503
-
-    return None, 0
+                return _tempfile
+        else:
+            Dialog().notification(_addon.getLocalizedString(33503), '')
