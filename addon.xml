@@ -10,10 +10,13 @@
         <provides>video</provides>
     </extension>
     <extension point="xbmc.addon.metadata">
+        <summary lang="en_GB">Video plugin for DramaCool</summary>
+        <description lang="en_GB">Watch Asian Drama and Korean Show with English subtitles.</description>
         <platform>all</platform>
         <license>MIT License</license>
         <assets>
             <icon>resources/icon.png</icon>
+            <fanart>resources/fanart.jpg</fanart>
         </assets>
     </extension>
 </addon>

@@ -298,7 +298,7 @@ def list_item(id, icon=None):
 
 
 def show(items, content=None, sort=False):
-    if content is not None:
+    if content:
         xbmcplugin.setContent(plugin.handle, content)
 
     if sort:
