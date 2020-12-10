@@ -280,6 +280,9 @@ def _():
             Dialog().notification(_addon.getLocalizedString(33501), '')
 
         xbmc.executebuiltin('Dialog.Close(busydialognocancel)')
+    else:
+        xbmc.executebuiltin('Playlist.Clear')
+        xbmc.sleep(1000)
 
     xbmcplugin.setResolvedUrl(plugin.handle, url is not False, item)
 
