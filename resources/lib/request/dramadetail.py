@@ -2,8 +2,6 @@ from request import Parser
 
 
 class DramaDetailParser(Parser):
-    pattern = ''
-
     def __init__(self):
         super(DramaDetailParser, self).__init__()
         self._poster = None
