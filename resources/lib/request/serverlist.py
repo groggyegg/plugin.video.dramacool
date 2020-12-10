@@ -1,4 +1,4 @@
-from parser import Parser
+from request import Parser
 
 
 class ServerListParser(Parser):

@@ -1,4 +1,4 @@
-from parser import Parser
+from request import Parser
 
 
 class RecentlyPaginationListParser(Parser):
@@ -27,7 +27,7 @@ class RecentlyPaginationListParser(Parser):
             self._title = data
             self._is_title = False
         elif self._is_ep:
-            self._recentlylist.append((self._path, self._poster, u'[{}] {} {}'.format(self._type, self._title, data)))
+            self._recentlylist.append((self._path, self._poster, f'[{self._type}] {self._title} {data}'))
             self._is_ep = False
 
     def end(self, tag):

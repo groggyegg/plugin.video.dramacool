@@ -5,7 +5,6 @@ import base64
 import edb
 import idb
 import os
-import parser
 import plugin
 import request
 import resolveurl
@@ -47,7 +46,7 @@ def _(type):
     items = []
 
     if type == 'movies':
-        (dramalist, paginationlist) = parser.DramaPaginationListParser().parse(request.get(plugin.pathquery))
+        (dramalist, paginationlist) = request.parse(plugin.pathquery, 'DramaPaginationListParser')
         idb.connect()
 
         for path in dramalist:
@@ -59,7 +58,7 @@ def _(type):
 
         idb.close()
     else:
-        (starlist, paginationlist) = parser.StarSearchPaginationListParser().parse(request.get(plugin.pathquery))
+        (starlist, paginationlist) = request.parse(plugin.pathquery, 'StarSearchPaginationListParser')
 
         for (path, poster, title) in starlist:
             item = ListItem(title)
@@ -102,7 +101,7 @@ def _(delete):
 @plugin.route(r'/recently-added-movie\?page=[^&]+')
 @plugin.route(r'/recently-added-kshow\?page=[^&]+')
 def _():
-    (recentlylist, paginationlist) = parser.RecentlyPaginationListParser().parse(request.get(plugin.pathquery))
+    (recentlylist, paginationlist) = request.parse(plugin.pathquery, 'RecentlyPaginationListParser')
     items = []
 
     for (path, poster, title) in recentlylist:
@@ -154,13 +153,11 @@ def _(path, selectid):
     items = []
 
     if selectid == 'char':
-        filterlist = parser.CharFilterListParser().parse(request.get(path))
+        filterlist = request.parse(path, 'CharFilterListParser')
     elif selectid == 'genre':
         filterlist = ['Action', 'Adventure', 'Comedy', 'Crime', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-fi', 'Thriller']
-    elif selectid == 'status':
-        filterlist = parser.StatusFilterListParser().parse(request.get(path))
     else:
-        filterlist = parser.YearFilterListParser().parse(request.get(path))
+        filterlist = request.parse(path, 'StatusYearFilterListParser', selectid=selectid)
 
     for selectvalue in filterlist:
         item = ListItem(selectvalue)
@@ -177,13 +174,11 @@ def _(path, selectid, selectvalue):
     items = []
 
     if selectid == 'char':
-        dramalist = parser.CharDramaListParser(selectvalue).parse(request.get(path))
+        dramalist = request.parse(path, 'CharDramaListParser', selectvalue=selectvalue)
     elif selectid == 'genre':
-        dramalist = parser.GenreDramaListParser(selectvalue).parse(request.get(path))
-    elif selectid == 'status':
-        dramalist = parser.StatusDramaListParser(selectvalue).parse(request.get(path))
+        dramalist = request.parse(path, 'GenreDramaListParser', selectvalue=selectvalue)
     else:
-        dramalist = parser.YearDramaListParser(selectvalue).parse(request.get(path))
+        dramalist = request.parse(path, 'StatusYearDramaListParser', selectid=selectid, selectvalue=selectvalue)
 
     for (path, poster, info) in idb.fetchall(dramalist):
         item = ListItem(info['title'])
@@ -197,7 +192,7 @@ def _(path, selectid, selectvalue):
 
 @plugin.route(r'/most-popular-drama\?page=[^&]+')
 def _():
-    (dramalist, paginationlist) = parser.DramaPaginationListParser().parse(request.get(plugin.pathquery))
+    (dramalist, paginationlist) = request.parse(plugin.pathquery, 'DramaPaginationListParser')
     idb.connect()
     items = []
 
@@ -215,7 +210,7 @@ def _():
 
 @plugin.route(r'/list-star.html\?page=[^&]+')
 def _():
-    (starlist, paginationlist) = parser.StarPaginationListParser().parse(request.get(plugin.pathquery))
+    (starlist, paginationlist) = request.parse(plugin.pathquery, 'StarPaginationListParser')
     items = []
 
     for (path, poster, title, plot) in starlist:
@@ -233,7 +228,7 @@ def _():
     idb.connect()
     items = []
 
-    for (path, poster, info) in idb.fetchall(parser.StarDramaListParser().parse(request.get(plugin.path))):
+    for (path, poster, info) in idb.fetchall(request.parse(plugin.path, 'StarDramaListParser')):
         item = ListItem(info['title'])
         item.setArt({'poster': poster})
         item.setInfo('video', info)
@@ -247,7 +242,7 @@ def _():
 def _():
     items = []
 
-    for (path, title) in parser.EpisodeListParser().parse(request.get(plugin.path)):
+    for (path, title) in request.parse(plugin.path, 'EpisodeListParser'):
         item = ListItem(title)
         item.setInfo('video', {})
         item.setProperty('IsPlayable', 'true')
@@ -258,7 +253,7 @@ def _():
 
 @plugin.route('/[^/]+.html', 1)
 def _():
-    (path, serverlist, titlelist, title) = parser.ServerListParser().parse(request.get(plugin.path))
+    (path, serverlist, titlelist, title) = request.parse(plugin.path, 'ServerListParser')
     position = Dialog().select(_addon.getLocalizedString(33500), titlelist)
     item = ListItem(title)
     url = False

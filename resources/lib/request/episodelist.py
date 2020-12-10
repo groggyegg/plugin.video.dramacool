@@ -1,4 +1,4 @@
-from parser import Parser
+from request import Parser
 
 
 class EpisodeListParser(Parser):
@@ -19,7 +19,7 @@ class EpisodeListParser(Parser):
             self._type = data
             self._is_type = False
         elif self._is_title:
-            self._episodelist.append((self._path, u'[{}] {}'.format(self._type, data.strip())))
+            self._episodelist.append((self._path, f'[{self._type}] {data.strip()}'))
             self._is_title = False
 
     def end(self, tag):

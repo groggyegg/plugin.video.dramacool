@@ -1,5 +1,4 @@
 import os
-import parser
 import request
 import sqlite3
 import xbmcaddon
@@ -37,13 +36,13 @@ def create():
     cursor = _connection.execute('SELECT path FROM drama')
     result = {path for (path,) in cursor.fetchall()}
 
-    for path in parser.DramaListParser().parse(request.get('/drama-list')):
+    for path in request.parse('/drama-list', 'DramaListParser'):
         if path not in result:
             add(path)
 
 
 def add(path):
-    (poster, title, plot, year) = parser.DramaDetailParser().parse(request.get(path))
+    (poster, title, plot, year) = request.parse(path, 'DramaDetailParser')
     _connection.execute('INSERT INTO drama VALUES (?, ?, ?, ?, ?)', (path, poster, title, plot, year))
     return poster, {'title': title, 'plot': plot, 'year': year}
 
