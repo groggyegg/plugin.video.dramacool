@@ -3,7 +3,6 @@ from request import Parser
 
 class StarPaginationListParser(Parser):
     def __init__(self):
-        super(StarPaginationListParser, self).__init__()
         self._starlist = []
         self._paginationlist = []
         self._path = None

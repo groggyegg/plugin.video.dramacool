@@ -3,7 +3,6 @@ from request import Parser
 
 class EpisodeListParser(Parser):
     def __init__(self):
-        super(EpisodeListParser, self).__init__()
         self._episodelist = []
         self._path = None
         self._type = None
@@ -12,7 +11,7 @@ class EpisodeListParser(Parser):
         self._is_type = False
 
     def close(self):
-        return self._episodelist
+        return reversed(self._episodelist)
 
     def data(self, data):
         if self._is_type:

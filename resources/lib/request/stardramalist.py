@@ -3,7 +3,6 @@ from request import Parser
 
 class StarDramaListParser(Parser):
     def __init__(self):
-        super(StarDramaListParser, self).__init__()
         self._dramalist = []
 
     def close(self):

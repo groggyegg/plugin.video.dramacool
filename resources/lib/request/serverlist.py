@@ -3,7 +3,6 @@ from request import Parser
 
 class ServerListParser(Parser):
     def __init__(self):
-        super(ServerListParser, self).__init__()
         self._serverlist = []
         self._servertitlelist = []
         self._title = None

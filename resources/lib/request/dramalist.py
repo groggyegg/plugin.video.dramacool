@@ -3,7 +3,6 @@ from request import Parser
 
 class DramaListParser(Parser):
     def __init__(self):
-        super(DramaListParser, self).__init__()
         self._dramalist = []
         self._is_item = False
 
@@ -26,7 +25,6 @@ class DramaListParser(Parser):
 
 class CharDramaListParser(Parser):
     def __init__(self, selectvalue):
-        super(CharDramaListParser, self).__init__()
         self._dramalist = []
         self._selectvalue = selectvalue
         self._is_selectvalue = False
@@ -54,7 +52,6 @@ class CharDramaListParser(Parser):
 
 class GenreDramaListParser(Parser):
     def __init__(self, selectvalue):
-        super(GenreDramaListParser, self).__init__()
         self._dramalist = []
         self._selectvalue = selectvalue
         self._is_selectvalue = False
@@ -78,7 +75,6 @@ class GenreDramaListParser(Parser):
 
 class StatusYearDramaListParser(Parser):
     def __init__(self, selectid, selectvalue):
-        super(StatusYearDramaListParser, self).__init__()
         self._dramalist = []
         self._selectvalue = f'{selectid}_{selectvalue}'
         self._is_selectvalue = False

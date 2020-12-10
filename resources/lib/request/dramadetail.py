@@ -3,7 +3,6 @@ from request import Parser
 
 class DramaDetailParser(Parser):
     def __init__(self):
-        super(DramaDetailParser, self).__init__()
         self._poster = None
         self._title = None
         self._plot = []

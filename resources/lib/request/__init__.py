@@ -36,6 +36,7 @@ except ImportError:
             self.start(tag, dict(attrs))
 
         def parse(self, text):
+            super().__init__()
             self.feed(text)
             return self.close()
 

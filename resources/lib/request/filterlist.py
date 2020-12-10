@@ -3,7 +3,6 @@ from request import Parser
 
 class CharFilterListParser(Parser):
     def __init__(self):
-        super(CharFilterListParser, self).__init__()
         self._filterlist = []
         self._is_char = False
 
@@ -25,7 +24,6 @@ class CharFilterListParser(Parser):
 
 class StatusYearFilterListParser(Parser):
     def __init__(self, selectid):
-        super(StatusYearFilterListParser, self).__init__()
         self._filterlist = []
         self._selectid = f'select-{selectid}'
         self._is_selectid = False

@@ -3,7 +3,6 @@ from request import Parser
 
 class DramaPaginationListParser(Parser):
     def __init__(self):
-        super(DramaPaginationListParser, self).__init__()
         self._dramalist = []
         self._paginationlist = []
         self._title = None

@@ -3,7 +3,6 @@ from request import Parser
 
 class RecentlyPaginationListParser(Parser):
     def __init__(self):
-        super(RecentlyPaginationListParser, self).__init__()
         self._recentlylist = []
         self._paginationlist = []
         self._path = None
