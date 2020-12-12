@@ -38,7 +38,7 @@ def _():
     keyboard.doModal()
 
     if keyboard.isConfirmed():
-        plugin.redirect(plugin.pathquery + '&keyword=' + keyboard.getText() + '&page=1')
+        plugin.redirect(f'{plugin.pathquery}&keyword={keyboard.getText()}&page=1')
 
 
 @plugin.route(r'/search\?((type=(?P<type>movies|stars)|page=[^&]+|keyword=[^&]+)&?)+', 1)
