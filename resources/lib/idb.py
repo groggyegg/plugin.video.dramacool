@@ -58,6 +58,17 @@ def fetchone(path):
         return poster, {'title': title, 'plot': plot, 'year': year}
 
 
+def fetchplot(poster):
+    cursor = _connection.execute('SELECT title, plot, year FROM drama WHERE poster = ?', (poster,))
+    result = cursor.fetchone()
+
+    if result is None:
+        return {}
+    else:
+        (title, plot, year) = result
+        return {'title': title, 'plot': plot, 'year': year}
+
+
 def fetchall(pathlist):
     pathset = set(pathlist)
 

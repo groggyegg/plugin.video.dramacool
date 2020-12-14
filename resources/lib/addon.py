@@ -102,17 +102,19 @@ def _(delete):
 @plugin.route(r'/recently-added-kshow\?page=[^&]+')
 def _():
     (recentlylist, paginationlist) = request.parse(plugin.pathquery, 'RecentlyPaginationListParser')
+    idb.connect()
     items = []
 
     for (path, poster, title) in recentlylist:
         item = ListItem(title)
         item.setArt({'poster': poster})
-        item.setInfo('video', {})
+        item.setInfo('video', idb.fetchplot(poster))
         item.setProperty('IsPlayable', 'true')
         items.append((url_for(path), item, False))
 
+    idb.close()
     append_pagination(items, paginationlist)
-    show(items, 'episodes')
+    show(items, 'tvshows')
 
 
 @plugin.route('/drama-list')
