@@ -1,34 +1,39 @@
-from re import fullmatch
-from sys import argv
-from urllib.parse import urlparse
-
-import collections
-
-handle = int(argv[1])
-url = argv[0] + argv[2]
-(scheme, netloc, path, params, query, fragment) = urlparse(url)
-domain = f'{scheme}://{netloc}'
-pathquery = f'{path}?{query}' if query else path
-routedict = collections.OrderedDict()
+import re
+import sys
+import urllib.parse
 
 
-def redirect(pathstring):
-    global path, pathquery, query, url
-    url = url_for(pathstring)
-    (_, _, path, _, query, _) = urlparse(pathstring)
-    pathquery = f'{path}?{query}' if query else path
+def urlparse():
+    global domain, fullpath, path, query
+    (scheme, netloc, path, params, query, fragment) = urllib.parse.urlparse(url)
+    domain = f'{scheme}://{netloc}'
+    fullpath = f'{path}?{query}' if query else path
+    query = urllib.parse.parse_qs(query)
+
+
+url = sys.argv[0] + sys.argv[2]
+domain = None
+handle = int(sys.argv[1])
+path = None
+routedict = {}
+query = None
+fullpath = None
+urlparse()
+
+
+def redirect(fullpath):
+    global url
+    url = url_for(fullpath)
+    urlparse()
     run()
 
 
-def route(pattern, order=0):
-    if order not in routedict:
-        routedict[order] = {}
-
+def route(pattern, **queries):
     def decorator(function):
-        if function not in routedict[order]:
-            routedict[order][function] = [pattern]
+        if function not in routedict:
+            routedict[function] = [(pattern, queries)]
         else:
-            routedict[order][function].append(pattern)
+            routedict[function].append((pattern, queries))
 
         return function
 
@@ -36,15 +41,34 @@ def route(pattern, order=0):
 
 
 def run():
-    for routes in routedict.values():
-        for (function, patterns) in routes.items():
-            for pattern in patterns:
-                match = fullmatch(pattern, pathquery)
+    for function, patterns in routedict.items():
+        for pattern, queries in patterns:
+            match = re.fullmatch(pattern, path)
 
-                if match is not None:
-                    function(**match.groupdict())
+            if match:
+                kwargs = match.groupdict()
+
+                for field, value in queries.items():
+                    if isinstance(value, str):
+                        if field in query:
+                            for string in query[field]:
+                                match = re.fullmatch(value, string)
+
+                                if match:
+                                    kwargs.update(match.groupdict())
+                                else:
+                                    break
+                        else:
+                            match = None
+                            break
+                    elif isinstance(value, bool) and ((value and field not in query) or (not value and field in query)):
+                        match = None
+                        break
+
+                if match:
+                    function(**kwargs)
                     return
 
 
-def url_for(pathstring):
-    return domain + pathstring
+def url_for(fullpath):
+    return domain + fullpath

@@ -32,44 +32,48 @@ def _():
           (url_for('/list-star.html?page=1'), list_item(33010, 'DefaultFavourites.png'), True)])
 
 
-@plugin.route(r'/search\?type=(movies|stars)')
+@plugin.route('/search', type=True, keyword=False)
 def _():
     keyboard = xbmc.Keyboard()
     keyboard.doModal()
 
     if keyboard.isConfirmed():
-        plugin.redirect(f'{plugin.pathquery}&keyword={keyboard.getText()}&page=1')
+        plugin.redirect(f'{plugin.fullpath}&keyword={keyboard.getText()}&page=1')
 
 
-@plugin.route(r'/search\?((type=(?P<type>movies|stars)|page=[^&]+|keyword=[^&]+)&?)+', 1)
-def _(type):
+@plugin.route('/search', type='movies')
+def _():
     items = []
+    (dramalist, paginationlist) = request.parse(plugin.fullpath, 'DramaPaginationListParser')
+    idb.connect()
 
-    if type == 'movies':
-        (dramalist, paginationlist) = request.parse(plugin.pathquery, 'DramaPaginationListParser')
-        idb.connect()
+    for path in dramalist:
+        (poster, info) = idb.fetchone(path)
+        item = ListItem(info['title'])
+        item.setArt({'poster': poster})
+        item.setInfo('video', info)
+        items.append((url_for(path), item, True))
 
-        for path in dramalist:
-            (poster, info) = idb.fetchone(path)
-            item = ListItem(info['title'])
-            item.setArt({'poster': poster})
-            item.setInfo('video', info)
-            items.append((url_for(path), item, True))
-
-        idb.close()
-    else:
-        (starlist, paginationlist) = request.parse(plugin.pathquery, 'StarSearchPaginationListParser')
-
-        for (path, poster, title) in starlist:
-            item = ListItem(title)
-            item.setArt({'poster': poster})
-            items.append((url_for(path), item, True))
-
+    idb.close()
     append_pagination(items, paginationlist)
     show(items, 'tvshows')
 
 
-@plugin.route('/recently-viewed')
+@plugin.route('/search', type='stars')
+def _():
+    items = []
+    (starlist, paginationlist) = request.parse(plugin.fullpath, 'StarSearchPaginationListParser')
+
+    for (path, poster, title) in starlist:
+        item = ListItem(title)
+        item.setArt({'poster': poster})
+        items.append((url_for(path), item, True))
+
+    append_pagination(items, paginationlist)
+    show(items, 'artists')
+
+
+@plugin.route('/recently-viewed', delete=False)
 def _():
     edb.connect()
     idb.connect()
@@ -89,7 +93,7 @@ def _():
     show(items, 'tvshows')
 
 
-@plugin.route(r'/recently-viewed\?delete=(?P<delete>.+)')
+@plugin.route('/recently-viewed', delete='(?P<delete>.+)')
 def _(delete):
     edb.connect()
     edb.remove(delete)
@@ -97,11 +101,11 @@ def _(delete):
     xbmc.executebuiltin('Container.Refresh')
 
 
-@plugin.route(r'/recently-added\?page=[^&]+')
-@plugin.route(r'/recently-added-movie\?page=[^&]+')
-@plugin.route(r'/recently-added-kshow\?page=[^&]+')
+@plugin.route('/recently-added')
+@plugin.route('/recently-added-movie')
+@plugin.route('/recently-added-kshow')
 def _():
-    (recentlylist, paginationlist) = request.parse(plugin.pathquery, 'RecentlyPaginationListParser')
+    (recentlylist, paginationlist) = request.parse(plugin.fullpath, 'RecentlyPaginationListParser')
     idb.connect()
     items = []
 
@@ -192,9 +196,9 @@ def _(path, selectid, selectvalue):
     show(items, 'tvshows', True)
 
 
-@plugin.route(r'/most-popular-drama\?page=[^&]+')
+@plugin.route('/most-popular-drama')
 def _():
-    (dramalist, paginationlist) = request.parse(plugin.pathquery, 'DramaPaginationListParser')
+    (dramalist, paginationlist) = request.parse(plugin.fullpath, 'DramaPaginationListParser')
     idb.connect()
     items = []
 
@@ -210,9 +214,9 @@ def _():
     show(items, 'tvshows')
 
 
-@plugin.route(r'/list-star.html\?page=[^&]+')
+@plugin.route('/list-star.html')
 def _():
-    (starlist, paginationlist) = request.parse(plugin.pathquery, 'StarPaginationListParser')
+    (starlist, paginationlist) = request.parse(plugin.fullpath, 'StarPaginationListParser')
     items = []
 
     for (path, poster, title, plot) in starlist:
@@ -253,7 +257,7 @@ def _():
     show(items, 'episodes')
 
 
-@plugin.route('/[^/]+.html', 1)
+@plugin.route('/[^/]+.html')
 def _():
     (path, serverlist, titlelist, title) = request.parse(plugin.path, 'ServerListParser')
     position = Dialog().select(_addon.getLocalizedString(33500), titlelist)
