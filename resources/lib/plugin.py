@@ -3,37 +3,19 @@ import sys
 import urllib.parse
 
 
-def urlparse():
-    global domain, fullpath, path, query
-    (scheme, netloc, path, params, query, fragment) = urllib.parse.urlparse(url)
-    domain = f'{scheme}://{netloc}'
-    fullpath = f'{path}?{query}' if query else path
-    query = urllib.parse.parse_qs(query)
-
-
-url = sys.argv[0] + sys.argv[2]
-domain = None
-handle = int(sys.argv[1])
-path = None
-routedict = {}
-query = None
-fullpath = None
-urlparse()
-
-
-def redirect(fullpath):
+def redirect(full_path):
     global url
-    url = url_for(fullpath)
+    url = url_for(full_path)
     urlparse()
     run()
 
 
-def route(pattern, **queries):
+def route(rule, **options):
     def decorator(function):
-        if function not in routedict:
-            routedict[function] = [(pattern, queries)]
+        if function in routedict:
+            routedict[function].append((rule, options))
         else:
-            routedict[function].append((pattern, queries))
+            routedict[function] = [(rule, options)]
 
         return function
 
@@ -41,17 +23,17 @@ def route(pattern, **queries):
 
 
 def run():
-    for function, patterns in routedict.items():
-        for pattern, queries in patterns:
-            match = re.fullmatch(pattern, path)
+    for function, routes in routedict.items():
+        for rule, options in routes:
+            match = re.fullmatch(rule, path)
 
             if match:
                 kwargs = match.groupdict()
 
-                for field, value in queries.items():
+                for name, value in options.items():
                     if isinstance(value, str):
-                        if field in query:
-                            for string in query[field]:
+                        if name in query:
+                            for string in query[name]:
                                 match = re.fullmatch(value, string)
 
                                 if match:
@@ -61,7 +43,7 @@ def run():
                         else:
                             match = None
                             break
-                    elif isinstance(value, bool) and ((value and field not in query) or (not value and field in query)):
+                    elif isinstance(value, bool) and ((value and name not in query) or (not value and name in query)):
                         match = None
                         break
 
@@ -70,5 +52,23 @@ def run():
                     return
 
 
-def url_for(fullpath):
-    return domain + fullpath
+def url_for(full_path):
+    return base_url + full_path
+
+
+def urlparse():
+    global base_url, full_path, path, query
+    (scheme, netloc, path, params, query, fragment) = urllib.parse.urlparse(url)
+    base_url = f'{scheme}://{netloc}'
+    full_path = f'{path}?{query}' if query else path
+    query = urllib.parse.parse_qs(query)
+
+
+base_url = None
+full_path = None
+handle = int(sys.argv[1])
+path = None
+query = None
+routedict = {}
+url = sys.argv[0] + sys.argv[2]
+urlparse()

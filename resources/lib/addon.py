@@ -38,13 +38,13 @@ def _():
     keyboard.doModal()
 
     if keyboard.isConfirmed():
-        plugin.redirect(f'{plugin.fullpath}&keyword={keyboard.getText()}&page=1')
+        plugin.redirect(f'{plugin.full_path}&keyword={keyboard.getText()}&page=1')
 
 
 @plugin.route('/search', type='movies')
 def _():
     items = []
-    (dramalist, paginationlist) = request.parse(plugin.fullpath, 'DramaPaginationListParser')
+    (dramalist, paginationlist) = request.parse(plugin.full_path, 'DramaPaginationListParser')
     idb.connect()
 
     for path in dramalist:
@@ -62,7 +62,7 @@ def _():
 @plugin.route('/search', type='stars')
 def _():
     items = []
-    (starlist, paginationlist) = request.parse(plugin.fullpath, 'StarSearchPaginationListParser')
+    (starlist, paginationlist) = request.parse(plugin.full_path, 'StarSearchPaginationListParser')
 
     for (path, poster, title) in starlist:
         item = ListItem(title)
@@ -105,7 +105,7 @@ def _(delete):
 @plugin.route('/recently-added-movie')
 @plugin.route('/recently-added-kshow')
 def _():
-    (recentlylist, paginationlist) = request.parse(plugin.fullpath, 'RecentlyPaginationListParser')
+    (recentlylist, paginationlist) = request.parse(plugin.full_path, 'RecentlyPaginationListParser')
     idb.connect()
     items = []
 
@@ -198,7 +198,7 @@ def _(path, selectid, selectvalue):
 
 @plugin.route('/most-popular-drama')
 def _():
-    (dramalist, paginationlist) = request.parse(plugin.fullpath, 'DramaPaginationListParser')
+    (dramalist, paginationlist) = request.parse(plugin.full_path, 'DramaPaginationListParser')
     idb.connect()
     items = []
 
@@ -216,7 +216,7 @@ def _():
 
 @plugin.route('/list-star.html')
 def _():
-    (starlist, paginationlist) = request.parse(plugin.fullpath, 'StarPaginationListParser')
+    (starlist, paginationlist) = request.parse(plugin.full_path, 'StarPaginationListParser')
     items = []
 
     for (path, poster, title, plot) in starlist:
