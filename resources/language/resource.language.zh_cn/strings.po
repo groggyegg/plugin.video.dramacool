@@ -47,108 +47,108 @@ msgstr "熱門明星"
 
 msgctxt "#33100"
 msgid "Remove"
-msgstr ""
+msgstr "去掉"
 
 msgctxt "#33101"
 msgid "Remove All"
-msgstr ""
+msgstr "移除所有"
 
 msgctxt "#33200"
 msgid "Korean Drama"
-msgstr ""
+msgstr "韓劇"
 
 msgctxt "#33201"
 msgid "Japanese Drama"
-msgstr ""
+msgstr "日本戲劇"
 
 msgctxt "#33202"
 msgid "Taiwanese Drama"
-msgstr ""
+msgstr "台灣話劇"
 
 msgctxt "#33203"
 msgid "Hong Kong Drama"
-msgstr ""
+msgstr "香港話劇"
 
 msgctxt "#33204"
 msgid "Chinese Drama"
-msgstr ""
+msgstr "中國戲曲"
 
 msgctxt "#33205"
 msgid "Other Asia Drama"
-msgstr ""
+msgstr "其他亞洲劇"
 
 msgctxt "#33206"
 msgid "Thailand Drama"
-msgstr ""
+msgstr "泰國戲劇"
 
 msgctxt "#33300"
 msgid "Korean Movies"
-msgstr ""
+msgstr "韓國電影"
 
 msgctxt "#33301"
 msgid "Japanese Movies"
-msgstr ""
+msgstr "日本電影"
 
 msgctxt "#33302"
 msgid "Taiwanese Movies"
-msgstr ""
+msgstr "台灣電影"
 
 msgctxt "#33303"
 msgid "Hong Kong Movies"
-msgstr ""
+msgstr "香港電影"
 
 msgctxt "#33304"
 msgid "Chinese Movies"
-msgstr ""
+msgstr "中國電影"
 
 msgctxt "#33305"
 msgid "American Movies"
-msgstr ""
+msgstr "美國電影"
 
 msgctxt "#33306"
 msgid "Other Asia Movies"
-msgstr ""
+msgstr "其他亞洲電影"
 
 msgctxt "#33307"
 msgid "Thailand Movies"
-msgstr ""
+msgstr "泰國電影"
 
 msgctxt "#33400"
 msgid "Filter By Char"
-msgstr ""
+msgstr "按字符篩選"
 
 msgctxt "#33401"
 msgid "Filter By Genre"
-msgstr ""
+msgstr "按類型過濾"
 
 msgctxt "#33402"
 msgid "Filter By Status"
-msgstr ""
+msgstr "按狀態過濾"
 
 msgctxt "#33403"
 msgid "Filter By Year"
-msgstr ""
+msgstr "按年份篩選"
 
 msgctxt "#33500"
 msgid "Choose Server"
-msgstr ""
+msgstr "選擇服務器"
 
 msgctxt "#33501"
 msgid "Couldn't Resolve Server"
-msgstr ""
+msgstr "無法解析服務器"
 
 msgctxt "#33502"
 msgid "Unsupported Server"
-msgstr ""
+msgstr "不支持的服務器"
 
 msgctxt "#33503"
 msgid "Couldn't Download Subtitle"
-msgstr ""
+msgstr "無法下載字幕"
 
 msgctxt "#33600"
 msgid "Next >"
-msgstr ""
+msgstr "下一頁 >"
 
 msgctxt "#33601"
 msgid "< Previous"
-msgstr ""
+msgstr "< 上一頁"
