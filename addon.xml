@@ -2,8 +2,8 @@
 <addon id="plugin.video.dramacool" name="DramaCool" version="1.8.5" provider-name="groggyegg">
     <requires>
         <import addon="script.module.lxml" optional="true"/>
-        <import addon="script.module.resolveurl" version="5.0.38"/>
-        <import addon="script.module.requests" version="2.22.0"/>
+        <import addon="script.module.resolveurl"/>
+        <import addon="script.module.requests"/>
         <import addon="xbmc.python" version="3.0.0"/>
     </requires>
     <extension point="xbmc.python.pluginsource" library="resources/lib/addon.py">

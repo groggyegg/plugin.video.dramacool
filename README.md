@@ -21,9 +21,4 @@ A video add-on for kodi that let you stream content from dramacool with english 
   - Other Asia Movies
   - Thailand Movies
 
-- KShow
-
-## Feature Roadmap
-- [x] ~~Python 3 Support (Kodi v19 Matrix)~~
-- [x] ~~Genre Filter~~
-- [ ] Additional Language Support
+- Korean Show

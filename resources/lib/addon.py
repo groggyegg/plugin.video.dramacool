@@ -288,7 +288,7 @@ def _():
         xbmc.executebuiltin('Dialog.Close(busydialognocancel)')
     else:
         xbmc.executebuiltin('Playlist.Clear')
-        xbmc.sleep(1000)
+        xbmc.sleep(500)
 
     xbmcplugin.setResolvedUrl(plugin.handle, url is not False, item)
 

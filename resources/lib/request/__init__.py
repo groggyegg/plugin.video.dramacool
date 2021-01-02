@@ -41,7 +41,7 @@ except ImportError:
             return self.close()
 
 _addon = xbmcaddon.Addon()
-_domains = ('https://watchasian.cc', 'https://dramacool.so', 'https://embed.watchasian.cc')
+_domains = ('watchasian.cc', 'dramacool.so')
 _parserdict = {}
 _session = requests.Session()
 _tempfile = os.path.join(xbmcvfs.translatePath(_addon.getAddonInfo('path')), 'resources/data/tempfile')
@@ -56,9 +56,12 @@ for module_info in iter_modules([Path(__file__).parent]):
             _parserdict[attribute_name] = attribute
 
 
-def get(path):
+def get(path, subdomain=''):
+    if subdomain:
+        subdomain = subdomain + '.'
+
     for domain in _domains:
-        response = _session.get(domain + path)
+        response = _session.get(f'https://{subdomain}{domain}{path}')
 
         if response.status_code == 200:
             return response.text
@@ -74,7 +77,7 @@ def subtitle(url):
     match = re.search('&sub=([^&]+)', url)
 
     if match:
-        text = get(f'/player/sub/index.php?id={match.group(1)}')
+        text = get(f'/player/sub/index.php?id={match.group(1)}', 'embed')
 
         if text:
             webvtt = text.replace('\ufeffWEBVTT\r\n\r\n', '', 1).split('\r\n\r\n')
