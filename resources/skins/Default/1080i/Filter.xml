@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+    <defaultcontrol always="true">5000</defaultcontrol>
+    <include>Animation_DialogPopupOpenClose</include>
+    <controls>
+        <control type="group">
+            <centerleft>50%</centerleft>
+            <centertop>50%</centertop>
+            <width>1300</width>
+            <height>850</height>
+            <include content="DialogBackgroundCommons">
+                <param name="width" value="1300"/>
+                <param name="height" value="850"/>
+                <param name="header_label" value="$ADDON[plugin.video.dramacool 33700]"/>
+                <param name="header_id" value="33700"/>
+            </include>
+            <control type="grouplist" id="9000">
+                <left>990</left>
+                <top>85</top>
+                <width>400</width>
+                <height>400</height>
+                <itemgap>dialogbuttons_itemgap</itemgap>
+                <orientation>vertical</orientation>
+                <onleft>60</onleft>
+                <include content="DefaultDialogButton">
+                    <param name="id" value="9100"/>
+                    <param name="label" value="$LOCALIZE[186]"/>
+                </include>
+                <include content="DefaultDialogButton">
+                    <param name="id" value="9200"/>
+                    <param name="label" value="$LOCALIZE[192]"/>
+                </include>
+            </control>
+            <control type="image">
+                <left>0</left>
+                <top>80</top>
+                <width>980</width>
+                <height>740</height>
+                <texture border="40">buttons/dialogbutton-nofo.png</texture>
+            </control>
+			<control type="scrollbar" id="60">
+				<left>970</left>
+				<top>100</top>
+				<width>12</width>
+				<height>700</height>
+				<onleft>5000</onleft>
+				<onright>9000</onright>
+				<orientation>vertical</orientation>
+			</control>
+            <control type="grouplist" id="5000">
+                <left>20</left>
+                <top>100</top>
+                <width>940</width>
+                <height>700</height>
+                <onright>60</onright>
+                <onup>5000</onup>
+                <ondown>5000</ondown>
+				<pagecontrol>60</pagecontrol>
+                <orientation>vertical</orientation>
+                <control type="button" id="5500">
+                    <include>DefaultSettingButton</include>
+                </control>
+                <control type="button" id="5600">
+                    <include>DefaultSettingButton</include>
+                </control>
+                <control type="button" id="5700">
+                    <include>DefaultSettingButton</include>
+                </control>
+                <control type="button" id="5800">
+                    <include>DefaultSettingButton</include>
+                </control>
+            </control>
+        </control>
+    </controls>
+</window>

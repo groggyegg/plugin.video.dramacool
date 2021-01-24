@@ -1,7 +1,7 @@
+from dialog import FilterDialog
 from plugin import url_for
 from xbmcgui import Dialog, ListItem
 
-import base64
 import edb
 import idb
 import os
@@ -147,53 +147,24 @@ def _():
 @plugin.route('/category/[^/]+')
 @plugin.route('/kshow')
 def _():
-    show([(url_for(f'{plugin.path}/char'), list_item(33400), True),
-          (url_for(f'{plugin.path}/genre'), list_item(33401), True),
-          (url_for(f'{plugin.path}/status'), list_item(33402), True),
-          (url_for(f'{plugin.path}/year'), list_item(33403), True)])
+    charlist, statuslist, yearlist = request.parse(plugin.path, 'FilterListParser')
+    genrelist = ['Action', 'Adventure', 'Comedy', 'Crime', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-fi', 'Thriller']
+    dialog = FilterDialog(charlist, genrelist, statuslist, yearlist)
+    dialog.doModal()
 
+    if not dialog.cancelled:
+        dramalist = request.parse(plugin.path, 'CharGenreStatusYearDramaListParser', **dialog.result())
+        idb.connect()
+        items = []
 
-@plugin.route('(?P<path>/category/[^/]+)/(?P<selectid>[^/]+)')
-@plugin.route('(?P<path>/kshow)/(?P<selectid>[^/]+)')
-def _(path, selectid):
-    items = []
+        for (path, poster, info) in idb.fetchall(dramalist):
+            item = ListItem(info['title'])
+            item.setArt({'poster': poster})
+            item.setInfo('video', info)
+            items.append((url_for(path), item, True))
 
-    if selectid == 'char':
-        filterlist = request.parse(path, 'CharFilterListParser')
-    elif selectid == 'genre':
-        filterlist = ['Action', 'Adventure', 'Comedy', 'Crime', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-fi', 'Thriller']
-    else:
-        filterlist = request.parse(path, 'StatusYearFilterListParser', selectid=selectid)
-
-    for selectvalue in filterlist:
-        item = ListItem(selectvalue)
-        items.append((url_for(f'{plugin.path}/{base64.b64encode(selectvalue.encode()).decode()}'), item, True))
-
-    show(items)
-
-
-@plugin.route('(?P<path>/category/[^/]+)/(?P<selectid>[^/]+)/(?P<selectvalue>[^/]+)')
-@plugin.route('(?P<path>/kshow)/(?P<selectid>[^/]+)/(?P<selectvalue>[^/]+)')
-def _(path, selectid, selectvalue):
-    selectvalue = base64.b64decode(selectvalue).decode('ascii')
-    idb.connect()
-    items = []
-
-    if selectid == 'char':
-        dramalist = request.parse(path, 'CharDramaListParser', selectvalue=selectvalue)
-    elif selectid == 'genre':
-        dramalist = request.parse(path, 'GenreDramaListParser', selectvalue=selectvalue)
-    else:
-        dramalist = request.parse(path, 'StatusYearDramaListParser', selectid=selectid, selectvalue=selectvalue)
-
-    for (path, poster, info) in idb.fetchall(dramalist):
-        item = ListItem(info['title'])
-        item.setArt({'poster': poster})
-        item.setInfo('video', info)
-        items.append((url_for(path), item, True))
-
-    idb.close()
-    show(items, 'tvshows', True)
+        idb.close()
+        show(items, 'tvshows', True)
 
 
 @plugin.route('/most-popular-drama')
@@ -290,7 +261,7 @@ def _():
         xbmc.executebuiltin('Playlist.Clear')
         xbmc.sleep(500)
 
-    xbmcplugin.setResolvedUrl(plugin.handle, url is not False, item)
+    xbmcplugin.setResolvedUrl(plugin.handle, isinstance(url, str), item)
 
 
 def append_pagination(items, paginationlist):

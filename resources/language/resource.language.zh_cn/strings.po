@@ -152,3 +152,7 @@ msgstr "下一頁 >"
 msgctxt "#33601"
 msgid "< Previous"
 msgstr "< 上一頁"
+
+msgctxt "#33700"
+msgid "Filter Dramas"
+msgstr "篩選劇情"

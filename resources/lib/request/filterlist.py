@@ -1,7 +1,27 @@
 from request import Parser
 
 
-class CharFilterListParser(Parser):
+class FilterListParser(Parser):
+    def __init__(self):
+        self._parsers = [CharFilterListParser(), StatusYearFilterListParser('status'), StatusYearFilterListParser('year')]
+
+    def close(self):
+        return [parser.close() for parser in self._parsers]
+
+    def data(self, data):
+        for parser in self._parsers:
+            parser.data(data)
+
+    def end(self, tag):
+        for parser in self._parsers:
+            parser.end(tag)
+
+    def start(self, tag, attrs):
+        for parser in self._parsers:
+            parser.start(tag, attrs)
+
+
+class CharFilterListParser:
     def __init__(self):
         self._filterlist = []
         self._is_char = False
@@ -22,7 +42,7 @@ class CharFilterListParser(Parser):
             self._is_char = True
 
 
-class StatusYearFilterListParser(Parser):
+class StatusYearFilterListParser:
     def __init__(self, selectid):
         self._filterlist = []
         self._selectid = f'select-{selectid}'

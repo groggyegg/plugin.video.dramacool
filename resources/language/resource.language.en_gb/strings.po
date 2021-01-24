@@ -152,3 +152,7 @@ msgstr ""
 msgctxt "#33601"
 msgid "< Previous"
 msgstr ""
+
+msgctxt "#33700"
+msgid "Filter Dramas"
+msgstr ""
