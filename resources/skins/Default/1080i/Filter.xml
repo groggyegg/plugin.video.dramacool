@@ -1,36 +1,106 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <window>
     <defaultcontrol always="true">5000</defaultcontrol>
-    <include>Animation_DialogPopupOpenClose</include>
     <controls>
         <control type="group">
             <centerleft>50%</centerleft>
             <centertop>50%</centertop>
             <width>1300</width>
             <height>850</height>
-            <include content="DialogBackgroundCommons">
-                <param name="width" value="1300"/>
-                <param name="height" value="850"/>
-                <param name="header_label" value="$ADDON[plugin.video.dramacool 33700]"/>
-                <param name="header_id" value="33700"/>
-            </include>
+            <!-- DialogBackgroundCommons -->
+            <control type="image">
+                <left>-2000</left>
+                <top>-2000</top>
+                <width>6000</width>
+                <height>6000</height>
+                <animation effect="fade" time="300">VisibleChange</animation>
+                <animation effect="fade" start="0" end="100" time="300">WindowOpen</animation>
+                <animation effect="fade" start="100" end="0" time="200">WindowClose</animation>
+                <texture colordiffuse="80FFFFFF">colors/black.png</texture>
+            </control>
+            <control type="group">
+                <width>1300</width>
+                <height>850</height>
+                <control type="image">
+                    <left>0</left>
+                    <top>0</top>
+                    <right>0</right>
+                    <bottom>0</bottom>
+                    <texture colordiffuse="FF1A2123">colors/white.png</texture>
+                </control>
+                <control type="image">
+                    <left>0</left>
+                    <top>0</top>
+                    <right>0</right>
+                    <height>70</height>
+                    <texture colordiffuse="FF12A0C7" border="2">colors/white70.png</texture>
+                </control>
+                <control type="label">
+                    <left>40</left>
+                    <top>0</top>
+                    <right>100</right>
+                    <height>70</height>
+                    <font>font32_title</font>
+                    <label>$ADDON[plugin.video.dramacool 33700]</label>
+                    <aligny>center</aligny>
+                    <shadowcolor>black</shadowcolor>
+                </control>
+                <control type="radiobutton">
+                    <left>1242</left>
+                    <top>11</top>
+                    <width>48</width>
+                    <height>48</height>
+                    <radiowidth>48</radiowidth>
+                    <radioheight>48</radioheight>
+                    <texturefocus/>
+                    <texturenofocus/>
+                    <label></label>
+                    <textureradioofffocus colordiffuse="EEFFFFFF">dialogs/close.png</textureradioofffocus>
+                    <textureradiooffnofocus colordiffuse="EEFFFFFF">special://xbmc/media/vendor_icon.png</textureradiooffnofocus>
+                    <textureradioonfocus colordiffuse="EEFFFFFF">dialogs/close.png</textureradioonfocus>
+                    <textureradioonnofocus colordiffuse="EEFFFFFF">special://xbmc/media/vendor_icon.png</textureradioonnofocus>
+                    <onclick>Action(close)</onclick>
+                </control>
+            </control>
+            <!-- Sidebar -->
             <control type="grouplist" id="9000">
                 <left>990</left>
                 <top>85</top>
                 <width>400</width>
                 <height>400</height>
-                <itemgap>dialogbuttons_itemgap</itemgap>
+                <itemgap>-20</itemgap>
                 <orientation>vertical</orientation>
-                <onleft>60</onleft>
-                <include content="DefaultDialogButton">
-                    <param name="id" value="9100"/>
-                    <param name="label" value="$LOCALIZE[186]"/>
-                </include>
-                <include content="DefaultDialogButton">
-                    <param name="id" value="9200"/>
-                    <param name="label" value="$LOCALIZE[192]"/>
-                </include>
+                <onleft>5000</onleft>
+                <control type="button" id="9100">
+                    <width>300</width>
+                    <height>100</height>
+                    <label>$LOCALIZE[186]</label>
+                    <font>font25_title</font>
+                    <align>center</align>
+                    <texturefocus border="40" colordiffuse="FF12A0C7">buttons/dialogbutton-fo.png</texturefocus>
+                    <texturenofocus border="40">buttons/dialogbutton-nofo.png</texturenofocus>
+                </control>
+                <control type="button" id="9200">
+                    <width>300</width>
+                    <height>100</height>
+                    <label>$LOCALIZE[192]</label>
+                    <font>font25_title</font>
+                    <align>center</align>
+                    <texturefocus border="40" colordiffuse="FF12A0C7">buttons/dialogbutton-fo.png</texturefocus>
+                    <texturenofocus border="40">buttons/dialogbutton-nofo.png</texturenofocus>
+                </control>
+                <control type="button" id="9300">
+                    <width>300</width>
+                    <height>100</height>
+                    <label>$LOCALIZE[222]</label>
+                    <font>font25_title</font>
+                    <align>center</align>
+                    <texturefocus border="40" colordiffuse="FF12A0C7">buttons/dialogbutton-fo.png</texturefocus>
+                    <texturenofocus border="40">buttons/dialogbutton-nofo.png</texturenofocus>
+                    <onclick>Action(close)</onclick>
+                </control>
             </control>
+            <!-- Content -->
             <control type="image">
                 <left>0</left>
                 <top>80</top>
@@ -38,36 +108,46 @@
                 <height>740</height>
                 <texture border="40">buttons/dialogbutton-nofo.png</texture>
             </control>
-			<control type="scrollbar" id="60">
-				<left>970</left>
-				<top>100</top>
-				<width>12</width>
-				<height>700</height>
-				<onleft>5000</onleft>
-				<onright>9000</onright>
-				<orientation>vertical</orientation>
-			</control>
             <control type="grouplist" id="5000">
                 <left>20</left>
                 <top>100</top>
                 <width>940</width>
                 <height>700</height>
-                <onright>60</onright>
+                <onright>9000</onright>
                 <onup>5000</onup>
                 <ondown>5000</ondown>
-				<pagecontrol>60</pagecontrol>
                 <orientation>vertical</orientation>
                 <control type="button" id="5500">
-                    <include>DefaultSettingButton</include>
+                    <textoffsetx>40</textoffsetx>
+                    <width>940</width>
+                    <height>70</height>
+                    <aligny>center</aligny>
+                    <texturefocus colordiffuse="FF12A0C7">lists/focus.png</texturefocus>
+                    <texturenofocus/>
                 </control>
                 <control type="button" id="5600">
-                    <include>DefaultSettingButton</include>
+                    <textoffsetx>40</textoffsetx>
+                    <width>940</width>
+                    <height>70</height>
+                    <aligny>center</aligny>
+                    <texturefocus colordiffuse="FF12A0C7">lists/focus.png</texturefocus>
+                    <texturenofocus/>
                 </control>
                 <control type="button" id="5700">
-                    <include>DefaultSettingButton</include>
+                    <textoffsetx>40</textoffsetx>
+                    <width>940</width>
+                    <height>70</height>
+                    <aligny>center</aligny>
+                    <texturefocus colordiffuse="FF12A0C7">lists/focus.png</texturefocus>
+                    <texturenofocus/>
                 </control>
                 <control type="button" id="5800">
-                    <include>DefaultSettingButton</include>
+                    <textoffsetx>40</textoffsetx>
+                    <width>940</width>
+                    <height>70</height>
+                    <aligny>center</aligny>
+                    <texturefocus colordiffuse="FF12A0C7">lists/focus.png</texturefocus>
+                    <texturenofocus/>
                 </control>
             </control>
         </control>

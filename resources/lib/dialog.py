@@ -16,17 +16,20 @@ class Button:
         self.heading = heading
         self.options = options
         self.items = []
+        self.selected = []
 
     def onclick(self, controlid):
         if self.label.getId() == controlid:
-            selected = Dialog().multiselect(self.heading, self.options, preselect=self.items)
+            selected = Dialog().multiselect(self.heading, self.options, preselect=self.selected)
 
             if selected is not None:
                 self.items = [self.options[i] for i in selected]
-                self.label.setLabel(f'{self.heading} [{len(selected)}/{len(self.options)}]')
+                self.selected = selected
+                self.label.setLabel(f'{self.heading} [{len(self.selected)}/{len(self.options)}]')
 
     def clear(self):
         self.items.clear()
+        self.selected.clear()
         self.label.setLabel(f'{self.heading} [0/{len(self.options)}]')
 
 
