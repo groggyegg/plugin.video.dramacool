@@ -43,6 +43,7 @@ class CharGenreStatusYearDramaListParser(Parser):
             self._parsers.append(StatusYearDramaListParser('status', statuses))
 
         if years:
+            self._decode_class = True
             self._parsers.append(StatusYearDramaListParser('year', years))
 
         if not chars and not years and not genres and not statuses:
@@ -65,7 +66,7 @@ class CharGenreStatusYearDramaListParser(Parser):
             parser.end(tag)
 
     def start(self, tag, attrs):
-        if self._decode_datagenre and 'data-genre' in attrs:
+        if self._decode_datagenre and 'data-genre' in attrs and attrs['data-genre']:
             attrs['data-genre'] = set(json.loads(attrs['data-genre']))
 
         if self._decode_class and 'class' in attrs:
