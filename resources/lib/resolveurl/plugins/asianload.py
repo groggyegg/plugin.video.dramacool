@@ -22,8 +22,8 @@ from resolveurl.resolver import ResolveUrl
 
 class AsianLoadResolver(ResolveUrl):
     name = "asianload"
-    domains = ['asianload.io']
-    pattern = r'(?://|\.)(asianload\.io)/\w+\.php\?(.+)'
+    domains = ['asianload.io', 'asianload.net']
+    pattern = r'(?://|\.)(asianload\.\w+)/\w+\.php\?(.+)'
 
     def get_media_url(self, host, media_id):
         html = self.net.http_GET(self.get_url(host, media_id)).content
