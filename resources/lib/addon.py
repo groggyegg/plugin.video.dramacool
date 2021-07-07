@@ -2,6 +2,16 @@ from dialog import FilterDialog
 from plugin import url_for
 from xbmcgui import Dialog, ListItem
 
+from request.dramalist import CharGenreStatusYearDramaListParser
+from request.dramapaginationlist import DramaPaginationListParser
+from request.episodelist import EpisodeListParser
+from request.filterlist import FilterListParser
+from request.recentlypaginationlist import RecentlyPaginationListParser
+from request.serverlist import ServerListParser
+from request.stardramalist import StarDramaListParser
+from request.starpaginationlist import StarPaginationListParser
+from request.starsearchpaginationlist import StarSearchPaginationListParser
+
 import edb
 import idb
 import os
@@ -44,7 +54,7 @@ def _():
 @plugin.route('/search', type='movies')
 def _():
     items = []
-    (dramalist, paginationlist) = request.parse(plugin.full_path, 'DramaPaginationListParser')
+    (dramalist, paginationlist) = request.parse(plugin.full_path, DramaPaginationListParser)
     idb.connect()
 
     for path in dramalist:
@@ -62,7 +72,7 @@ def _():
 @plugin.route('/search', type='stars')
 def _():
     items = []
-    (starlist, paginationlist) = request.parse(plugin.full_path, 'StarSearchPaginationListParser')
+    (starlist, paginationlist) = request.parse(plugin.full_path, StarSearchPaginationListParser)
 
     for (path, poster, title) in starlist:
         item = ListItem(title)
@@ -105,7 +115,7 @@ def _(delete):
 @plugin.route('/recently-added-movie')
 @plugin.route('/recently-added-kshow')
 def _():
-    (recentlylist, paginationlist) = request.parse(plugin.full_path, 'RecentlyPaginationListParser')
+    (recentlylist, paginationlist) = request.parse(plugin.full_path, RecentlyPaginationListParser)
     idb.connect()
     items = []
 
@@ -147,13 +157,13 @@ def _():
 @plugin.route('/category/[^/]+')
 @plugin.route('/kshow')
 def _():
-    charlist, statuslist, yearlist = request.parse(plugin.path, 'FilterListParser')
+    charlist, statuslist, yearlist = request.parse(plugin.path, FilterListParser)
     genrelist = ['Action', 'Adventure', 'Comedy', 'Crime', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-fi', 'Thriller']
     dialog = FilterDialog(charlist, genrelist, statuslist, yearlist)
     dialog.doModal()
 
     if not dialog.cancelled:
-        dramalist = request.parse(plugin.path, 'CharGenreStatusYearDramaListParser', **dialog.result())
+        dramalist = request.parse(plugin.path, CharGenreStatusYearDramaListParser, **dialog.result())
         idb.connect()
         items = []
 
@@ -169,7 +179,7 @@ def _():
 
 @plugin.route('/most-popular-drama')
 def _():
-    (dramalist, paginationlist) = request.parse(plugin.full_path, 'DramaPaginationListParser')
+    (dramalist, paginationlist) = request.parse(plugin.full_path, DramaPaginationListParser)
     idb.connect()
     items = []
 
@@ -187,7 +197,7 @@ def _():
 
 @plugin.route('/list-star.html')
 def _():
-    (starlist, paginationlist) = request.parse(plugin.full_path, 'StarPaginationListParser')
+    (starlist, paginationlist) = request.parse(plugin.full_path, StarPaginationListParser)
     items = []
 
     for (path, poster, title, plot) in starlist:
@@ -205,7 +215,7 @@ def _():
     idb.connect()
     items = []
 
-    for (path, poster, info) in idb.fetchall(request.parse(plugin.path, 'StarDramaListParser')):
+    for (path, poster, info) in idb.fetchall(request.parse(plugin.path, StarDramaListParser)):
         item = ListItem(info['title'])
         item.setArt({'poster': poster})
         item.setInfo('video', info)
@@ -219,7 +229,7 @@ def _():
 def _():
     items = []
 
-    for (path, title) in request.parse(plugin.path, 'EpisodeListParser'):
+    for (path, title) in request.parse(plugin.path, EpisodeListParser):
         item = ListItem(title)
         item.setInfo('video', {})
         item.setProperty('IsPlayable', 'true')
@@ -230,7 +240,7 @@ def _():
 
 @plugin.route('/[^/]+.html')
 def _():
-    (path, serverlist, titlelist, title) = request.parse(plugin.path, 'ServerListParser')
+    (path, serverlist, titlelist, title) = request.parse(plugin.path, ServerListParser)
     position = Dialog().select(_addon.getLocalizedString(33500), titlelist)
     item = ListItem(title)
     url = False

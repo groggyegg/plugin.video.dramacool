@@ -22,7 +22,7 @@ from resolveurl.resolver import ResolveUrl
 
 class AsianLoadResolver(ResolveUrl):
     name = "asianload"
-    domains = ['asianload.io', 'asianload.net']
+    domains = ['asianload.cc', 'asianload.io', 'asianload.net']
     pattern = r'(?://|\.)(asianload\.\w+)/\w+\.php\?(.+)'
 
     def get_media_url(self, host, media_id):

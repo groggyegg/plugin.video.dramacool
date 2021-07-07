@@ -1,7 +1,3 @@
-from importlib import import_module
-from inspect import isclass
-from pathlib import Path
-from pkgutil import iter_modules
 from xbmcgui import Dialog
 
 import os
@@ -41,19 +37,9 @@ except ImportError:
             return self.close()
 
 _addon = xbmcaddon.Addon()
-_domains = ('watchasian.cc', 'dramacool.so')
-_parserdict = {}
+_domains = ('watchasian.vc', 'dramacool.fm')
 _session = requests.Session()
 _tempfile = os.path.join(xbmcvfs.translatePath(_addon.getAddonInfo('path')), 'resources/data/tempfile')
-
-for module_info in iter_modules([Path(__file__).parent]):
-    module = import_module(f"{__name__}.{module_info.name}")
-
-    for attribute_name in dir(module):
-        attribute = getattr(module, attribute_name)
-
-        if isclass(attribute) and issubclass(attribute, Parser):
-            _parserdict[attribute_name] = attribute
 
 
 def get(path, subdomain=''):
@@ -67,10 +53,8 @@ def get(path, subdomain=''):
             return response.text
 
 
-def parse(path, classname, **kwargs):
-    for name, parser in _parserdict.items():
-        if classname == name:
-            return parser(**kwargs).parse(get(path))
+def parse(path, parser, **kwargs):
+    return parser(**kwargs).parse(get(path))
 
 
 def subtitle(url):
