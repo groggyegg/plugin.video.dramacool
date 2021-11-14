@@ -3,7 +3,7 @@ from request import Parser
 
 class StarDramaListParser(Parser):
     def __init__(self):
-        self._dramalist = []
+        self._dramalist = set()
 
     def close(self):
         return self._dramalist
@@ -16,4 +16,4 @@ class StarDramaListParser(Parser):
 
     def start(self, tag, attrs):
         if tag == 'a' and 'class' in attrs and 'img' in attrs['class']:
-            self._dramalist.append(attrs['href'])
+            self._dramalist.add(attrs['href'])

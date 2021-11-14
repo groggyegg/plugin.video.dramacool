@@ -45,6 +45,10 @@ msgctxt "#33010"
 msgid "Popular Star"
 msgstr "熱門明星"
 
+msgctxt "#33011"
+msgid "Recently Filtered"
+msgstr "最近过滤"
+
 msgctxt "#33100"
 msgid "Remove"
 msgstr "去掉"

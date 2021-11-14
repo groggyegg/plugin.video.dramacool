@@ -45,6 +45,10 @@ msgctxt "#33010"
 msgid "Popular Star"
 msgstr ""
 
+msgctxt "#33011"
+msgid "Recently Filtered"
+msgstr ""
+
 msgctxt "#33100"
 msgid "Remove"
 msgstr ""

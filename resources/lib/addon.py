@@ -1,7 +1,13 @@
+import os
+from json import loads, dumps
+
+import plugin
+import request
+import resolveurl
+from database import Drama, RecentDrama, RecentFilter
 from dialog import FilterDialog
 from plugin import url_for
-from xbmcgui import Dialog, ListItem
-
+from request.dramadetail import DramaDetailParser
 from request.dramalist import CharGenreStatusYearDramaListParser
 from request.dramapaginationlist import DramaPaginationListParser
 from request.episodelist import EpisodeListParser
@@ -11,27 +17,18 @@ from request.serverlist import ServerListParser
 from request.stardramalist import StarDramaListParser
 from request.starpaginationlist import StarPaginationListParser
 from request.starsearchpaginationlist import StarSearchPaginationListParser
+from xbmclib import *
 
-import edb
-import idb
-import os
-import plugin
-import request
-import resolveurl
-import xbmc
-import xbmcaddon
-import xbmcplugin
-import xbmcvfs
-
-_addon = xbmcaddon.Addon()
-_plugins = os.path.join(xbmcvfs.translatePath(_addon.getAddonInfo('path')), 'resources/lib/resolveurl/plugins')
+_addon = Addon()
+_plugins = os.path.join(translatePath(_addon.getAddonInfo('path')), 'resources/lib/resolveurl/plugins')
 
 
 @plugin.route('/')
 def _():
     show([(url_for('/search?type=movies'), list_item(33000, 'DefaultAddonsSearch.png'), True),
           (url_for('/search?type=stars'), list_item(33001, 'DefaultAddonsSearch.png'), True),
-          (url_for('/recently-viewed'), list_item(33002, 'DefaultUser.png'), True),
+          (url_for('/recently-viewed'), list_item(33002, 'DefaultTags.png'), True),
+          (url_for('/recently-filtered'), list_item(33011, 'DefaultTags.png'), True),
           (url_for('/recently-added?page=1'), list_item(33003, 'DefaultRecentlyAddedEpisodes.png'), True),
           (url_for('/recently-added-movie?page=1'), list_item(33004, 'DefaultRecentlyAddedEpisodes.png'), True),
           (url_for('/recently-added-kshow?page=1'), list_item(33005, 'DefaultRecentlyAddedEpisodes.png'), True),
@@ -44,7 +41,7 @@ def _():
 
 @plugin.route('/search', type=True, keyword=False)
 def _():
-    keyboard = xbmc.Keyboard()
+    keyboard = Keyboard()
     keyboard.doModal()
 
     if keyboard.isConfirmed():
@@ -55,16 +52,11 @@ def _():
 def _():
     items = []
     (dramalist, paginationlist) = request.parse(plugin.full_path, DramaPaginationListParser)
-    idb.connect()
 
     for path in dramalist:
-        (poster, info) = idb.fetchone(path)
-        item = ListItem(info['title'])
-        item.setArt({'poster': poster})
-        item.setInfo('video', info)
-        items.append((url_for(path), item, True))
+        item = Drama.get_or_none(Drama.path == path)
+        items.append((url_for(path), item if item else request.parse(path, DramaDetailParser, path_=path), True))
 
-    idb.close()
     append_pagination(items, paginationlist)
     show(items, 'tvshows')
 
@@ -85,30 +77,40 @@ def _():
 
 @plugin.route('/recently-viewed', delete=False)
 def _():
-    edb.connect()
-    idb.connect()
     items = []
 
-    for path in edb.fetchall():
-        (poster, info) = idb.fetchone(path)
-        item = ListItem(info['title'])
-        item.addContextMenuItems([(_addon.getLocalizedString(33100), f'RunPlugin({plugin.url}?delete={path})'),
+    for recent_drama in RecentDrama.select(RecentDrama.path).order_by(RecentDrama.timestamp.desc()):
+        item = Drama.get_or_none(Drama.path == recent_drama.path)
+        item = item if item else request.parse(recent_drama.path, DramaDetailParser, path_=recent_drama.path)
+        item.addContextMenuItems([(_addon.getLocalizedString(33100), f'RunPlugin({plugin.url}?delete={item.path})'),
                                   (_addon.getLocalizedString(33101), f'RunPlugin({plugin.url}?delete=%)')])
-        item.setArt({'poster': poster})
-        item.setInfo('video', info)
-        items.append((url_for(path), item, True))
+        items.append((url_for(item.path), item, True))
 
-    edb.close()
-    idb.close()
     show(items, 'tvshows')
 
 
 @plugin.route('/recently-viewed', delete='(?P<delete>.+)')
 def _(delete):
-    edb.connect()
-    edb.remove(delete)
-    edb.close()
-    xbmc.executebuiltin('Container.Refresh')
+    RecentDrama.delete().where(RecentDrama.path ** delete).execute()
+    executebuiltin('Container.Refresh')
+
+
+@plugin.route('/recently-filtered', delete=False)
+def _():
+    items = []
+
+    for recent_filter in RecentFilter.select(RecentFilter.path, RecentFilter.title).order_by(RecentFilter.timestamp.desc()):
+        recent_filter.addContextMenuItems([(_addon.getLocalizedString(33100), f'RunPlugin({plugin.url}?delete={recent_filter.path})'),
+                                           (_addon.getLocalizedString(33101), f'RunPlugin({plugin.url}?delete=%)')])
+        items.append((url_for(recent_filter.path), recent_filter, True))
+
+    show(items, 'tvshows')
+
+
+@plugin.route('/recently-filtered', delete='(?P<delete>.+)')
+def _(delete):
+    RecentFilter.delete().where(RecentFilter.path ** delete).execute()
+    executebuiltin('Container.Refresh')
 
 
 @plugin.route('/recently-added')
@@ -116,46 +118,48 @@ def _(delete):
 @plugin.route('/recently-added-kshow')
 def _():
     (recentlylist, paginationlist) = request.parse(plugin.full_path, RecentlyPaginationListParser)
-    idb.connect()
     items = []
 
     for (path, poster, title) in recentlylist:
-        item = ListItem(title)
-        item.setArt({'poster': poster})
-        item.setInfo('video', idb.fetchplot(poster))
+        item = Drama.get_or_none(Drama.poster == poster)
+
+        if item is None:
+            item = ListItem(title)
+            item.setArt({'poster': poster})
+            item.setInfo('video', {})
+
         item.setProperty('IsPlayable', 'true')
         items.append((url_for(path), item, False))
 
-    idb.close()
     append_pagination(items, paginationlist)
     show(items, 'tvshows')
 
 
 @plugin.route('/drama-list')
 def _():
-    show([(url_for('/category/korean-drama'), list_item(33200), True),
-          (url_for('/category/japanese-drama'), list_item(33201), True),
-          (url_for('/category/taiwanese-drama'), list_item(33202), True),
-          (url_for('/category/hong-kong-drama'), list_item(33203), True),
-          (url_for('/category/chinese-drama'), list_item(33204), True),
-          (url_for('/category/other-asia-drama'), list_item(33205), True),
-          (url_for('/category/thailand-drama'), list_item(33206), True)])
+    show([(url_for(f'/category/korean-drama?label={33200}'), list_item(33200), True),
+          (url_for(f'/category/japanese-drama?label={33201}'), list_item(33201), True),
+          (url_for(f'/category/taiwanese-drama?label={33202}'), list_item(33202), True),
+          (url_for(f'/category/hong-kong-drama?label={33203}'), list_item(33203), True),
+          (url_for(f'/category/chinese-drama?label={33204}'), list_item(33204), True),
+          (url_for(f'/category/other-asia-drama?label={33205}'), list_item(33205), True),
+          (url_for(f'/category/thailand-drama?label={33206}'), list_item(33206), True)])
 
 
 @plugin.route('/drama-movie')
 def _():
-    show([(url_for('/category/korean-movies'), list_item(33300), True),
-          (url_for('/category/japanese-movies'), list_item(33301), True),
-          (url_for('/category/taiwanese-movies'), list_item(33302), True),
-          (url_for('/category/hong-kong-movies'), list_item(33303), True),
-          (url_for('/category/chinese-movies'), list_item(33304), True),
-          (url_for('/category/american-movies'), list_item(33305), True),
-          (url_for('/category/other-asia-movies'), list_item(33306), True),
-          (url_for('/category/thailand-movies'), list_item(33307), True)])
+    show([(url_for(f'/category/korean-movies?label={33300}'), list_item(33300), True),
+          (url_for(f'/category/japanese-movies?label={33301}'), list_item(33301), True),
+          (url_for(f'/category/taiwanese-movies?label={33302}'), list_item(33302), True),
+          (url_for(f'/category/hong-kong-movies?label={33303}'), list_item(33303), True),
+          (url_for(f'/category/chinese-movies?label={33304}'), list_item(33304), True),
+          (url_for(f'/category/american-movies?label={33305}'), list_item(33305), True),
+          (url_for(f'/category/other-asia-movies?label={33306}'), list_item(33306), True),
+          (url_for(f'/category/thailand-movies?label={33307}'), list_item(33307), True)])
 
 
-@plugin.route('/category/[^/]+')
-@plugin.route('/kshow')
+@plugin.route('/category/[^/]+', filterstr=False)
+@plugin.route('/kshow', filterstr=False)
 def _():
     charlist, statuslist, yearlist = request.parse(plugin.path, FilterListParser)
     genrelist = ['Action', 'Adventure', 'Comedy', 'Crime', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-fi', 'Thriller']
@@ -163,34 +167,44 @@ def _():
     dialog.doModal()
 
     if not dialog.cancelled:
-        dramalist = request.parse(plugin.path, CharGenreStatusYearDramaListParser, **dialog.result())
-        idb.connect()
-        items = []
+        plugin.redirect(f'{plugin.full_path}&filterstr={dumps(dialog.result())}')
 
-        for (path, poster, info) in idb.fetchall(dramalist):
-            item = ListItem(info['title'])
-            item.setArt({'poster': poster})
-            item.setInfo('video', info)
-            items.append((url_for(path), item, True))
 
-        idb.close()
-        show(items, 'tvshows', True)
+@plugin.route('/category/[^/]+', label='(?P<label>.+)', filterstr='(?P<filterstr>.+)')
+@plugin.route('/kshow', label='(?P<label>.+)', filterstr='(?P<filterstr>.+)')
+def _(label, filterstr):
+    filterdict = loads(filterstr)
+    chars = filterdict["chars"]
+    years = filterdict["years"]
+    genres = filterdict["genres"]
+    statuses = filterdict["statuses"]
+
+    title = f'[{_addon.getLocalizedString(int(label))}] Character: {chars} Year: {years} Genre: {genres} Status: {statuses}'
+    RecentFilter.create(path=plugin.full_path, title=title)
+    paths = request.parse(plugin.path, CharGenreStatusYearDramaListParser, chars=chars, years=years, genres=genres, statuses=statuses)
+    items = []
+
+    for drama in Drama.select().where(Drama.path << paths):
+        paths.discard(drama.path)
+        items.append((url_for(drama.path), drama, True))
+
+    for path in paths:
+        drama = request.parse(path, DramaDetailParser, path_=path)
+        items.append((url_for(path), drama, True))
+
+    show(items, 'tvshows', True)
 
 
 @plugin.route('/most-popular-drama')
 def _():
     (dramalist, paginationlist) = request.parse(plugin.full_path, DramaPaginationListParser)
-    idb.connect()
     items = []
 
     for path in dramalist:
-        (poster, info) = idb.fetchone(path)
-        item = ListItem(info['title'])
-        item.setArt({'poster': poster})
-        item.setInfo('video', info)
+        item = Drama.get_or_none(Drama.path == path)
+        item = item if item else request.parse(path, DramaDetailParser, path_=path)
         items.append((url_for(path), item, True))
 
-    idb.close()
     append_pagination(items, paginationlist)
     show(items, 'tvshows')
 
@@ -212,16 +226,17 @@ def _():
 
 @plugin.route('/star/[^/]+')
 def _():
-    idb.connect()
     items = []
+    paths = request.parse(plugin.path, StarDramaListParser)
 
-    for (path, poster, info) in idb.fetchall(request.parse(plugin.path, StarDramaListParser)):
-        item = ListItem(info['title'])
-        item.setArt({'poster': poster})
-        item.setInfo('video', info)
+    for drama in Drama.select().where(Drama.path in paths):
+        paths.discard(drama.path)
+        items.append((url_for(drama.path), drama, True))
+
+    for path in paths:
+        item = request.parse(path, DramaDetailParser, path_=path)
         items.append((url_for(path), item, True))
 
-    idb.close()
     show(items, 'tvshows', True)
 
 
@@ -246,16 +261,14 @@ def _():
     url = False
 
     if position != -1:
-        xbmc.executebuiltin('ActivateWindow(busydialognocancel)')
+        executebuiltin('ActivateWindow(busydialognocancel)')
         resolveurl.add_plugin_dirs(_plugins)
 
         try:
             url = resolveurl.resolve(serverlist[position])
 
             if url:
-                edb.connect()
-                edb.add(path)
-                edb.close()
+                RecentDrama.create(path=path)
                 item.setPath(url)
                 subtitle = request.subtitle(serverlist[position])
 
@@ -266,12 +279,12 @@ def _():
         except:
             Dialog().notification(_addon.getLocalizedString(33501), '')
 
-        xbmc.executebuiltin('Dialog.Close(busydialognocancel)')
+        executebuiltin('Dialog.Close(busydialognocancel)')
     else:
-        xbmc.executebuiltin('Playlist.Clear')
-        xbmc.sleep(500)
+        executebuiltin('Playlist.Clear')
+        sleep(500)
 
-    xbmcplugin.setResolvedUrl(plugin.handle, isinstance(url, str), item)
+    setResolvedUrl(plugin.handle, isinstance(url, str), item)
 
 
 def append_pagination(items, paginationlist):
@@ -289,14 +302,14 @@ def list_item(id, icon=None):
 
 def show(items, content=None, sort=False):
     if content:
-        xbmcplugin.setContent(plugin.handle, content)
+        setContent(plugin.handle, content)
 
     if sort:
-        xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_TITLE)
-        xbmcplugin.addSortMethod(plugin.handle, xbmcplugin.SORT_METHOD_VIDEO_YEAR)
+        addSortMethod(plugin.handle, SORT_METHOD_TITLE)
+        addSortMethod(plugin.handle, SORT_METHOD_VIDEO_YEAR)
 
-    xbmcplugin.addDirectoryItems(plugin.handle, items, len(items))
-    xbmcplugin.endOfDirectory(plugin.handle)
+    addDirectoryItems(plugin.handle, items, len(items))
+    endOfDirectory(plugin.handle)
 
 
 if __name__ == '__main__':

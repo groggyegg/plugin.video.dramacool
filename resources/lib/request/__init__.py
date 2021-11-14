@@ -1,10 +1,8 @@
-from xbmcgui import Dialog
+from xbmclib import *
 
 import os
 import re
 import requests
-import xbmcaddon
-import xbmcvfs
 
 try:
     import lxml.etree
@@ -36,10 +34,10 @@ except ImportError:
             self.feed(text)
             return self.close()
 
-_addon = xbmcaddon.Addon()
-_domains = ('watchasian.vc', 'dramacool.fm')
+_addon = Addon()
+_domains = ('watchasian.so', 'dramacool.sk')
 _session = requests.Session()
-_tempfile = os.path.join(xbmcvfs.translatePath(_addon.getAddonInfo('path')), 'resources/data/tempfile')
+_tempfile = os.path.join(translatePath(_addon.getAddonInfo('path')), 'resources/data/tempfile')
 
 
 def get(path, subdomain=''):

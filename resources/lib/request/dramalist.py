@@ -55,7 +55,7 @@ class CharGenreStatusYearDramaListParser(Parser):
         for parser in self._parsers:
             result.intersection_update(parser.close())
 
-        return list(result)
+        return result
 
     def data(self, data):
         for parser in self._parsers:
