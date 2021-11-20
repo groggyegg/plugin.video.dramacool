@@ -4,13 +4,20 @@ from os.path import exists
 from peewee import CharField, Model, SmallIntegerField, SQL, SqliteDatabase, TextField
 from playhouse.sqlite_ext import DateTimeField, JSONField
 
-from xbmclib import Addon, ListItem, translatePath
+from xbmclib import getAddonInfo, ListItem, translatePath
 
 
 class ExternalDatabase(object):
-    profile = translatePath(Addon().getAddonInfo('profile'))
+    profile = translatePath(getAddonInfo('profile'))
     connection = SqliteDatabase(profile + 'dramacool.db')
-    connection_v1 = SqliteDatabase(profile + 'recently_viewed.db')
+
+    @staticmethod
+    def close():
+        ExternalDatabase.connection.close()
+
+    @staticmethod
+    def connect():
+        ExternalDatabase.connection.connect(True)
 
     @staticmethod
     def create():
@@ -19,22 +26,40 @@ class ExternalDatabase(object):
 
         ExternalDatabase.connection.connect(True)
         ExternalDatabase.connection.create_tables([RecentDrama, RecentFilter])
-        ExternalDatabase.migration_v1()
+        ExternalDatabase.migration_20211114()
         ExternalDatabase.connection.commit()
         ExternalDatabase.connection.close()
 
     @staticmethod
-    def migration_v1():
-        if exists(ExternalDatabase.connection_v1.database):
+    def migration_20211114():
+        connection = SqliteDatabase(ExternalDatabase.profile + 'recently_viewed.db')
+
+        if exists(connection.database):
+            class RecentlyViewed(Model):
+                path = TextField(primary_key=True, constraints=[SQL('ON CONFLICT REPLACE')])
+                last_visited = DateTimeField(constraints=[SQL('DEFAULT CURRENT_TIMESTAMP')])
+
+                class Meta:
+                    database = connection
+                    table_name = 'recently_viewed'
+
             for recently_viewed in RecentlyViewed.select():
                 RecentDrama.create(path=recently_viewed.path, timestamp=recently_viewed.last_visited)
 
-            ExternalDatabase.connection_v1.close()
-            remove(ExternalDatabase.connection_v1.database)
+            connection.close()
+            remove(connection.database)
 
 
 class InternalDatabase(object):
-    connection = SqliteDatabase(translatePath(Addon().getAddonInfo('path')) + 'resources/data/dramacool.db')
+    connection = SqliteDatabase(translatePath(getAddonInfo('path')) + 'resources/data/dramacool.db')
+
+    @staticmethod
+    def close():
+        InternalDatabase.connection.close()
+
+    @staticmethod
+    def connect():
+        InternalDatabase.connection.connect(True)
 
     @staticmethod
     def create():
@@ -100,15 +125,3 @@ class RecentFilter(ExternalModel, ListItem):
     def __init__(self, *args, **kwargs):
         super(RecentFilter, self).__init__(*args, **kwargs)
         self.setLabel(kwargs.pop('title'))
-
-
-class RecentlyViewed(Model):
-    path = TextField(primary_key=True, constraints=[SQL('ON CONFLICT REPLACE')])
-    last_visited = DateTimeField(constraints=[SQL('DEFAULT CURRENT_TIMESTAMP')])
-
-    class Meta:
-        database = ExternalDatabase.connection_v1
-        table_name = 'recently_viewed'
-
-
-ExternalDatabase.create()

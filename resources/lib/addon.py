@@ -1,10 +1,11 @@
 import os
 from json import loads, dumps
+from urllib.parse import quote
 
 import plugin
 import request
 import resolveurl
-from database import Drama, RecentDrama, RecentFilter
+from database import Drama, RecentDrama, RecentFilter, ExternalDatabase, InternalDatabase
 from dialog import FilterDialog
 from plugin import url_for
 from request.dramadetail import DramaDetailParser
@@ -19,8 +20,7 @@ from request.starpaginationlist import StarPaginationListParser
 from request.starsearchpaginationlist import StarSearchPaginationListParser
 from xbmclib import *
 
-_addon = Addon()
-_plugins = os.path.join(translatePath(_addon.getAddonInfo('path')), 'resources/lib/resolveurl/plugins')
+_plugins = os.path.join(translatePath(getAddonInfo('path')), 'resources/lib/resolveurl/plugins')
 
 
 @plugin.route('/')
@@ -34,7 +34,7 @@ def _():
           (url_for('/recently-added-kshow?page=1'), list_item(33005, 'DefaultRecentlyAddedEpisodes.png'), True),
           (url_for('/drama-list'), list_item(33006, 'DefaultTVShows.png'), True),
           (url_for('/drama-movie'), list_item(33007, 'DefaultTVShows.png'), True),
-          (url_for('/kshow'), list_item(33008, 'DefaultTVShows.png'), True),
+          (url_for('/kshow?label=33008'), list_item(33008, 'DefaultTVShows.png'), True),
           (url_for('/most-popular-drama?page=1'), list_item(33009, 'DefaultFavourites.png'), True),
           (url_for('/list-star.html?page=1'), list_item(33010, 'DefaultFavourites.png'), True)])
 
@@ -45,7 +45,7 @@ def _():
     keyboard.doModal()
 
     if keyboard.isConfirmed():
-        plugin.redirect(f'{plugin.full_path}&keyword={keyboard.getText()}&page=1')
+        plugin.redirect(plugin.full_path + '&keyword=' + keyboard.getText() + '&page=1')
 
 
 @plugin.route('/search', type='movies')
@@ -82,8 +82,8 @@ def _():
     for recent_drama in RecentDrama.select(RecentDrama.path).order_by(RecentDrama.timestamp.desc()):
         item = Drama.get_or_none(Drama.path == recent_drama.path)
         item = item if item else request.parse(recent_drama.path, DramaDetailParser, path_=recent_drama.path)
-        item.addContextMenuItems([(_addon.getLocalizedString(33100), f'RunPlugin({plugin.url}?delete={item.path})'),
-                                  (_addon.getLocalizedString(33101), f'RunPlugin({plugin.url}?delete=%)')])
+        item.addContextMenuItems([(getLocalizedString(33100), 'RunPlugin(' + plugin.url + '?delete=' + item.path + ')'),
+                                  (getLocalizedString(33101), 'RunPlugin(' + plugin.url + '?delete=%)')])
         items.append((url_for(item.path), item, True))
 
     show(items, 'tvshows')
@@ -100,8 +100,8 @@ def _():
     items = []
 
     for recent_filter in RecentFilter.select(RecentFilter.path, RecentFilter.title).order_by(RecentFilter.timestamp.desc()):
-        recent_filter.addContextMenuItems([(_addon.getLocalizedString(33100), f'RunPlugin({plugin.url}?delete={recent_filter.path})'),
-                                           (_addon.getLocalizedString(33101), f'RunPlugin({plugin.url}?delete=%)')])
+        recent_filter.addContextMenuItems([(getLocalizedString(33100), 'RunPlugin(' + plugin.url + '?delete=' + recent_filter.path + ')'),
+                                           (getLocalizedString(33101), 'RunPlugin(' + plugin.url + '?delete=%)')])
         items.append((url_for(recent_filter.path), recent_filter, True))
 
     show(items, 'tvshows')
@@ -109,7 +109,7 @@ def _():
 
 @plugin.route('/recently-filtered', delete='(?P<delete>.+)')
 def _(delete):
-    RecentFilter.delete().where(RecentFilter.path ** delete).execute()
+    RecentFilter.delete().where(RecentFilter.path.contains(delete)).execute()
     executebuiltin('Container.Refresh')
 
 
@@ -137,25 +137,27 @@ def _():
 
 @plugin.route('/drama-list')
 def _():
-    show([(url_for(f'/category/korean-drama?label={33200}'), list_item(33200), True),
-          (url_for(f'/category/japanese-drama?label={33201}'), list_item(33201), True),
-          (url_for(f'/category/taiwanese-drama?label={33202}'), list_item(33202), True),
-          (url_for(f'/category/hong-kong-drama?label={33203}'), list_item(33203), True),
-          (url_for(f'/category/chinese-drama?label={33204}'), list_item(33204), True),
-          (url_for(f'/category/other-asia-drama?label={33205}'), list_item(33205), True),
-          (url_for(f'/category/thailand-drama?label={33206}'), list_item(33206), True)])
+    show([(url_for('/category/korean-drama?label=33200'), list_item(33200), True),
+          (url_for('/category/japanese-drama?label=33201'), list_item(33201), True),
+          (url_for('/category/taiwanese-drama?label=33202'), list_item(33202), True),
+          (url_for('/category/hong-kong-drama?label=33203'), list_item(33203), True),
+          (url_for('/category/chinese-drama?label=33204'), list_item(33204), True),
+          (url_for('/category/other-asia-drama?label=33205'), list_item(33205), True),
+          (url_for('/category/thailand-drama?label=33206'), list_item(33206), True),
+          (url_for('/category/indian-drama?label=33207'), list_item(33207), True)])
 
 
 @plugin.route('/drama-movie')
 def _():
-    show([(url_for(f'/category/korean-movies?label={33300}'), list_item(33300), True),
-          (url_for(f'/category/japanese-movies?label={33301}'), list_item(33301), True),
-          (url_for(f'/category/taiwanese-movies?label={33302}'), list_item(33302), True),
-          (url_for(f'/category/hong-kong-movies?label={33303}'), list_item(33303), True),
-          (url_for(f'/category/chinese-movies?label={33304}'), list_item(33304), True),
-          (url_for(f'/category/american-movies?label={33305}'), list_item(33305), True),
-          (url_for(f'/category/other-asia-movies?label={33306}'), list_item(33306), True),
-          (url_for(f'/category/thailand-movies?label={33307}'), list_item(33307), True)])
+    show([(url_for('/category/korean-movies?label=33300'), list_item(33300), True),
+          (url_for('/category/japanese-movies?label=33301'), list_item(33301), True),
+          (url_for('/category/taiwanese-movies?label=33302'), list_item(33302), True),
+          (url_for('/category/hong-kong-movies?label=33303'), list_item(33303), True),
+          (url_for('/category/chinese-movies?label=33304'), list_item(33304), True),
+          (url_for('/category/american-movies?label=33305'), list_item(33305), True),
+          (url_for('/category/other-asia-movies?label=33306'), list_item(33306), True),
+          (url_for('/category/thailand-movies?label=33307'), list_item(33307), True),
+          (url_for('/category/indian-movies?label=33308'), list_item(33308), True)])
 
 
 @plugin.route('/category/[^/]+', filterstr=False)
@@ -167,7 +169,7 @@ def _():
     dialog.doModal()
 
     if not dialog.cancelled:
-        plugin.redirect(f'{plugin.full_path}&filterstr={dumps(dialog.result())}')
+        plugin.redirect(plugin.full_path + '&filterstr=' + quote(dumps(dialog.result())))
 
 
 @plugin.route('/category/[^/]+', label='(?P<label>.+)', filterstr='(?P<filterstr>.+)')
@@ -179,7 +181,7 @@ def _(label, filterstr):
     genres = filterdict["genres"]
     statuses = filterdict["statuses"]
 
-    title = f'[{_addon.getLocalizedString(int(label))}] Character: {chars} Year: {years} Genre: {genres} Status: {statuses}'
+    title = '[' + getLocalizedString(int(label)) + '] Character: ' + str(chars) + ' Year: ' + str(years) + ' Genre: ' + str(genres) + ' Status: ' + str(statuses)
     RecentFilter.create(path=plugin.full_path, title=title)
     paths = request.parse(plugin.path, CharGenreStatusYearDramaListParser, chars=chars, years=years, genres=genres, statuses=statuses)
     items = []
@@ -256,7 +258,7 @@ def _():
 @plugin.route('/[^/]+.html')
 def _():
     (path, serverlist, titlelist, title) = request.parse(plugin.path, ServerListParser)
-    position = Dialog().select(_addon.getLocalizedString(33500), titlelist)
+    position = Dialog().select(getLocalizedString(33500), titlelist)
     item = ListItem(title)
     url = False
 
@@ -275,9 +277,9 @@ def _():
                 if subtitle:
                     item.setSubtitles([subtitle])
             else:
-                Dialog().notification(_addon.getLocalizedString(33502), '')
+                Dialog().notification(getLocalizedString(33502), '')
         except:
-            Dialog().notification(_addon.getLocalizedString(33501), '')
+            Dialog().notification(getLocalizedString(33501), '')
 
         executebuiltin('Dialog.Close(busydialognocancel)')
     else:
@@ -295,7 +297,7 @@ def append_pagination(items, paginationlist):
 
 
 def list_item(id, icon=None):
-    item = ListItem(_addon.getLocalizedString(id))
+    item = ListItem(getLocalizedString(id))
     item.setArt({'icon': icon})
     return item
 
@@ -313,4 +315,11 @@ def show(items, content=None, sort=False):
 
 
 if __name__ == '__main__':
-    plugin.run()
+    try:
+        ExternalDatabase.connect()
+        ExternalDatabase.create()
+        InternalDatabase.connect()
+        plugin.run()
+    finally:
+        ExternalDatabase.close()
+        InternalDatabase.close()

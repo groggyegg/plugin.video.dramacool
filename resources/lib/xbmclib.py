@@ -86,3 +86,6 @@ except ImportError:
 
     def setResolvedUrl(handle, succeeded, listitem):
         pass
+
+getAddonInfo = Addon().getAddonInfo
+getLocalizedString = Addon().getLocalizedString

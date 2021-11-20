@@ -10,6 +10,7 @@ A video add-on for kodi that let you stream content from dramacool with english 
   - Chinese Drama
   - Other Asia Drama
   - Thailand Drama
+  - Indian Drama
 
 - Drama Movie
   - Korean Movies
@@ -20,5 +21,6 @@ A video add-on for kodi that let you stream content from dramacool with english 
   - American Movies
   - Other Asia Movies
   - Thailand Movies
+  - Indian Movies
 
 - Korean Show
