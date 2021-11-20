@@ -17,14 +17,13 @@ class ExternalDatabase(object):
 
     @staticmethod
     def connect():
-        ExternalDatabase.connection.connect(True)
-
-    @staticmethod
-    def create():
         if not exists(ExternalDatabase.profile):
             makedirs(ExternalDatabase.profile)
 
         ExternalDatabase.connection.connect(True)
+
+    @staticmethod
+    def create():
         ExternalDatabase.connection.create_tables([RecentDrama, RecentFilter])
         ExternalDatabase.migration_20211114()
         ExternalDatabase.connection.commit()
@@ -67,7 +66,6 @@ class InternalDatabase(object):
         from request.dramalist import DramaListParser
         from request.dramadetail import DramaDetailParser
 
-        InternalDatabase.connection.connect(True)
         InternalDatabase.connection.create_tables([Drama])
 
         paths = {drama.path for drama in Drama.select()}
