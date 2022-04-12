@@ -1,23 +1,15 @@
 import os
+from functools import reduce
 from json import loads, dumps
+from operator import or_
 from urllib.parse import quote
 
 import plugin
-import request
 import resolveurl
 from database import Drama, RecentDrama, RecentFilter, ExternalDatabase, InternalDatabase
 from dialog import FilterDialog
 from plugin import url_for
-from request.dramadetail import DramaDetailParser
-from request.dramalist import CharGenreStatusYearDramaListParser
-from request.dramapaginationlist import DramaPaginationListParser
-from request.episodelist import EpisodeListParser
-from request.filterlist import FilterListParser
-from request.recentlypaginationlist import RecentlyPaginationListParser
-from request.serverlist import ServerListParser
-from request.stardramalist import StarDramaListParser
-from request.starpaginationlist import StarPaginationListParser
-from request.starsearchpaginationlist import StarSearchPaginationListParser
+from request import RecentlyDramaRequest, SearchRequest, StarListRequest, StarDramaRequest, DramaDetailRequest, EpisodeListRequest, ServerListRequest
 from xbmclib import *
 
 _plugins = os.path.join(translatePath(getAddonInfo('path')), 'resources/lib/resolveurl/plugins')
@@ -50,28 +42,27 @@ def _():
 
 @plugin.route('/search', type='movies')
 def _():
+    dramas, pagination = SearchRequest().get(plugin.full_path)
     items = []
-    (dramalist, paginationlist) = request.parse(plugin.full_path, DramaPaginationListParser)
 
-    for path in dramalist:
+    for path, title, poster in dramas:
         item = Drama.get_or_none(Drama.path == path)
-        items.append((url_for(path), item if item else request.parse(path, DramaDetailParser, path_=path), True))
+        items.append((url_for(path), item if item else Drama.create(**DramaDetailRequest().get(path)), True))
 
-    append_pagination(items, paginationlist)
+    append_pagination(items, pagination)
     show(items, 'tvshows')
 
 
 @plugin.route('/search', type='stars')
 def _():
+    stars, pagination = SearchRequest().get(plugin.full_path)
     items = []
-    (starlist, paginationlist) = request.parse(plugin.full_path, StarSearchPaginationListParser)
 
-    for (path, poster, title) in starlist:
-        item = ListItem(title)
-        item.setArt({'poster': poster})
+    for path, title, poster in stars:
+        item = Drama(title=title, poster=poster)
         items.append((url_for(path), item, True))
 
-    append_pagination(items, paginationlist)
+    append_pagination(items, pagination)
     show(items, 'artists')
 
 
@@ -81,7 +72,7 @@ def _():
 
     for recent_drama in RecentDrama.select(RecentDrama.path).order_by(RecentDrama.timestamp.desc()):
         item = Drama.get_or_none(Drama.path == recent_drama.path)
-        item = item if item else request.parse(recent_drama.path, DramaDetailParser, path_=recent_drama.path)
+        item = item if item else Drama.create(**DramaDetailRequest().get(recent_drama.path))
         item.addContextMenuItems([(getLocalizedString(33100), 'RunPlugin(' + plugin.url + '?delete=' + item.path + ')'),
                                   (getLocalizedString(33101), 'RunPlugin(' + plugin.url + '?delete=%)')])
         items.append((url_for(item.path), item, True))
@@ -117,21 +108,16 @@ def _(delete):
 @plugin.route('/recently-added-movie')
 @plugin.route('/recently-added-kshow')
 def _():
-    (recentlylist, paginationlist) = request.parse(plugin.full_path, RecentlyPaginationListParser)
+    episodes, pagination = RecentlyDramaRequest().get(plugin.full_path)
     items = []
 
-    for (path, poster, title) in recentlylist:
-        item = Drama.get_or_none(Drama.poster == poster)
-
-        if item is None:
-            item = ListItem(title)
-            item.setArt({'poster': poster})
-            item.setInfo('video', {})
-
+    for (path, poster, dateadded, title) in episodes:
+        item = Drama.select().where(Drama.poster == poster).get_or_none()
+        item = Drama(title=title, poster=poster, dateadded=dateadded, **{'plot': item.plot} if item else {})
         item.setProperty('IsPlayable', 'true')
         items.append((url_for(path), item, False))
 
-    append_pagination(items, paginationlist)
+    append_pagination(items, pagination)
     show(items, 'tvshows')
 
 
@@ -163,9 +149,15 @@ def _():
 @plugin.route('/category/[^/]+', filterstr=False)
 @plugin.route('/kshow', filterstr=False)
 def _():
-    charlist, statuslist, yearlist = request.parse(plugin.path, FilterListParser)
-    genrelist = ['Action', 'Adventure', 'Comedy', 'Crime', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-fi', 'Thriller']
-    dialog = FilterDialog(charlist, genrelist, statuslist, yearlist)
+    characters = ['#', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+                  'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+    genres = ['Action', 'Adventure', 'Comedy', 'Crime', 'Drama', 'Fantasy',
+              'Horror', 'Mystery', 'Romance', 'Sci-fi', 'Thriller']
+    statuses = ['Ongoing', 'Completed', 'Upcoming']
+    years = ['2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011',
+             '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022']
+
+    dialog = FilterDialog(characters, genres, statuses, years)
     dialog.doModal()
 
     if not dialog.cancelled:
@@ -175,69 +167,71 @@ def _():
 @plugin.route('/category/[^/]+', label='(?P<label>.+)', filterstr='(?P<filterstr>.+)')
 @plugin.route('/kshow', label='(?P<label>.+)', filterstr='(?P<filterstr>.+)')
 def _(label, filterstr):
-    filterdict = loads(filterstr)
-    chars = filterdict["chars"]
-    years = filterdict["years"]
-    genres = filterdict["genres"]
-    statuses = filterdict["statuses"]
+    filters = loads(filterstr)
+    expr = Drama.mediatype == plugin.path
 
-    title = '[' + getLocalizedString(int(label)) + '] Character: ' + str(chars) + ' Year: ' + str(years) + ' Genre: ' + str(genres) + ' Status: ' + str(statuses)
+    if filters['chars']:
+        expr &= reduce(or_, [~(Drama.title % '[a-zA-Z]*') if char == '#' else (Drama.title % (char + '*')) for char in filters['chars']])
+
+    if filters['years']:
+        expr &= Drama.year << filters['years']
+
+    if filters['genres']:
+        expr &= Drama.genre % ('*' + '*'.join(genre for genre in filters['genres']) + '*')
+
+    if filters['statuses']:
+        expr &= Drama.status << filters['statuses']
+
+    title = '[{}] Character: {} Year: {} Genre: {} Status: {}'.format(getLocalizedString(int(label)),
+                                                                      str(filters['chars']),
+                                                                      str(filters['years']),
+                                                                      str(filters['genres']),
+                                                                      str(filters['statuses']))
+
     RecentFilter.create(path=plugin.full_path, title=title)
-    paths = request.parse(plugin.path, CharGenreStatusYearDramaListParser, chars=chars, years=years, genres=genres, statuses=statuses)
     items = []
 
-    for drama in Drama.select().where(Drama.path << paths):
-        paths.discard(drama.path)
-        items.append((url_for(drama.path), drama, True))
-
-    for path in paths:
-        drama = request.parse(path, DramaDetailParser, path_=path)
-        items.append((url_for(path), drama, True))
+    for item in Drama.select().where(expr):
+        items.append((url_for(item.path), item, True))
 
     show(items, 'tvshows', True)
 
 
 @plugin.route('/most-popular-drama')
 def _():
-    (dramalist, paginationlist) = request.parse(plugin.full_path, DramaPaginationListParser)
+    dramas, pagination = SearchRequest().get(plugin.full_path)
     items = []
 
-    for path in dramalist:
+    for path, title, poster in dramas:
         item = Drama.get_or_none(Drama.path == path)
-        item = item if item else request.parse(path, DramaDetailParser, path_=path)
+        item = item if item else Drama(title=title, poster=poster)
         items.append((url_for(path), item, True))
 
-    append_pagination(items, paginationlist)
+    append_pagination(items, pagination)
     show(items, 'tvshows')
 
 
 @plugin.route('/list-star.html')
 def _():
-    (starlist, paginationlist) = request.parse(plugin.full_path, StarPaginationListParser)
+    stars, pagination = StarListRequest().get(plugin.full_path)
     items = []
 
-    for (path, poster, title, plot) in starlist:
-        item = ListItem(title)
-        item.setArt({'poster': poster})
-        item.setInfo('video', {'plot': plot})
+    for (path, title, poster, plot) in stars:
+        item = Drama(title=title, poster=poster, plot=plot)
         items.append((url_for(path), item, True))
 
-    append_pagination(items, paginationlist)
+    append_pagination(items, pagination)
     show(items)
 
 
 @plugin.route('/star/[^/]+')
 def _():
+    dramas = StarDramaRequest().get(plugin.path)
     items = []
-    paths = request.parse(plugin.path, StarDramaListParser)
 
-    for drama in Drama.select().where(Drama.path in paths):
-        paths.discard(drama.path)
-        items.append((url_for(drama.path), drama, True))
-
-    for path in paths:
-        item = request.parse(path, DramaDetailParser, path_=path)
-        items.append((url_for(path), item, True))
+    for path, title, poster in dramas:
+        item = Drama.get_or_none(Drama.path == path)
+        items.append((url_for(path), item if item else Drama(title=title, poster=poster), True))
 
     show(items, 'tvshows', True)
 
@@ -246,9 +240,8 @@ def _():
 def _():
     items = []
 
-    for (path, title) in request.parse(plugin.path, EpisodeListParser):
-        item = ListItem(title)
-        item.setInfo('video', {})
+    for path, title in EpisodeListRequest().get(plugin.path):
+        item = Drama(title=title)
         item.setProperty('IsPlayable', 'true')
         items.append((url_for(path), item, False))
 
@@ -257,8 +250,9 @@ def _():
 
 @plugin.route('/[^/]+.html')
 def _():
-    (path, serverlist, titlelist, title) = request.parse(plugin.path, ServerListParser)
-    position = Dialog().select(getLocalizedString(33500), titlelist)
+    request = ServerListRequest()
+    title, path, servers = request.get(plugin.path)
+    position = Dialog().select(getLocalizedString(33500), [name for video, name in servers])
     item = ListItem(title)
     url = False
 
@@ -267,12 +261,12 @@ def _():
         resolveurl.add_plugin_dirs(_plugins)
 
         try:
-            url = resolveurl.resolve(serverlist[position])
+            url = resolveurl.resolve(servers[position][0])
 
             if url:
                 RecentDrama.create(path=path)
                 item.setPath(url)
-                subtitle = request.subtitle(serverlist[position])
+                subtitle = request.get_subtitle(servers[position][0])
 
                 if subtitle:
                     item.setSubtitles([subtitle])
@@ -291,13 +285,13 @@ def _():
 
 def append_pagination(items, paginationlist):
     for (query, title) in paginationlist:
-        item = list_item(33600) if title == 'next' else list_item(33601, 'DefaultFolderBack.png')
+        item = list_item(label=title) if '>' in title else list_item(label=title, icon='DefaultFolderBack.png')
         item.setProperty('SpecialSort', 'bottom')
-        items.append((url_for(plugin.path + query), item, True))
+        items.append((url_for(query), item, True))
 
 
-def list_item(id, icon=None):
-    item = ListItem(getLocalizedString(id))
+def list_item(id=None, icon=None, label=None):
+    item = ListItem(getLocalizedString(id) if id else label)
     item.setArt({'icon': icon})
     return item
 

@@ -1,10 +1,23 @@
+from json import loads, dumps
 from os import makedirs, remove
 from os.path import exists
 
 from peewee import CharField, Model, SmallIntegerField, SQL, SqliteDatabase, TextField
-from playhouse.sqlite_ext import DateTimeField, JSONField
+from playhouse.sqlite_ext import DateTimeField
 
+from request import DramaDetailRequest, DramaListRequest
 from xbmclib import getAddonInfo, ListItem, translatePath
+
+
+class JSONField(CharField):
+    def db_value(self, value):
+        if isinstance(value, str):
+            return value
+        else:
+            return dumps(value)
+
+    def python_value(self, value):
+        return loads(value)
 
 
 class ExternalDatabase(object):
@@ -27,7 +40,6 @@ class ExternalDatabase(object):
         ExternalDatabase.connection.create_tables([RecentDrama, RecentFilter])
         ExternalDatabase.migration_20211114()
         ExternalDatabase.connection.commit()
-        ExternalDatabase.connection.close()
 
     @staticmethod
     def migration_20211114():
@@ -62,20 +74,21 @@ class InternalDatabase(object):
 
     @staticmethod
     def create():
-        import request
-        from request.dramalist import DramaListParser
-        from request.dramadetail import DramaDetailParser
-
         InternalDatabase.connection.create_tables([Drama])
 
-        paths = {drama.path for drama in Drama.select()}
+        paths = {drama.path for drama in Drama.select().where((Drama.status == 'Completed') & Drama.mediatype.is_null(False))}
+        mediatypes = ['/category/korean-movies', '/category/japanese-movies', '/category/taiwanese-movies', '/category/hong-kong-movies',
+                      '/category/chinese-movies', '/category/american-movies', '/category/other-asia-movies', '/category/thailand-movies',
+                      '/category/indian-movies', '/category/korean-drama', '/category/japanese-drama', '/category/taiwanese-drama',
+                      '/category/hong-kong-drama', '/category/chinese-drama', '/category/american-drama', '/category/other-asia-drama',
+                      '/category/thailand-drama', '/category/indian-drama', '/kshow']
 
-        for path in request.parse('/drama-list', DramaListParser):
-            if path not in paths:
-                request.parse(path, DramaDetailParser, path_=path)
+        for mediatype in mediatypes:
+            for path in DramaListRequest().get(mediatype):
+                if path not in paths:
+                    Drama.create(**DramaDetailRequest().get(path), mediatype=mediatype)
 
         InternalDatabase.connection.commit()
-        InternalDatabase.connection.close()
 
 
 class ExternalModel(Model):
@@ -91,11 +104,13 @@ class InternalModel(Model):
 class Drama(InternalModel, ListItem):
     path = CharField(primary_key=True, constraints=[SQL('ON CONFLICT REPLACE')])
     poster = CharField(null=True)
-    title = CharField()
+    title = CharField(index=True)
     plot = CharField(null=True)
-    country = CharField(null=True)
-    genre = JSONField(null=True)
-    year = SmallIntegerField(null=True)
+    country = CharField(null=True, index=True)
+    status = CharField(null=True, index=True)
+    genre = JSONField(null=True, index=True)
+    year = SmallIntegerField(null=True, index=True)
+    mediatype = CharField(null=True, index=True)
 
     def __new__(cls, *args, **kwargs):
         return super(Drama, cls).__new__(cls)
@@ -103,7 +118,7 @@ class Drama(InternalModel, ListItem):
     def __init__(self, *args, **kwargs):
         super(Drama, self).__init__(*args, **kwargs)
         self.setLabel(kwargs.pop('title'))
-        self.setArt({'poster': kwargs.pop('poster')})
+        self.setArt({'poster': kwargs.pop('poster')} if 'poster' in kwargs else None)
         self.setInfo('video', kwargs)
 
 

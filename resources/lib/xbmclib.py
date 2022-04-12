@@ -46,6 +46,9 @@ except ImportError:
         def setInfo(self, type, infoLabels):
             pass
 
+        def setLabel(self, label):
+            pass
+
         def setPath(self, path):
             pass
 

@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.dramacool" name="DramaCool" version="2.2.3" provider-name="groggyegg">
+<addon id="plugin.video.dramacool" name="DramaCool" version="2.3.0" provider-name="groggyegg">
     <requires>
-        <import addon="script.module.resolveurl" version="5.1.50"/>
-        <import addon="script.module.requests"/>
-        <import addon="script.module.peewee"/>
-        <import addon="xbmc.python" version="3.0.0"/>
+        <import addon="script.module.beautifulsoup4" />
+        <import addon="script.module.resolveurl" version="5.1.64" />
+        <import addon="script.module.requests" />
+        <import addon="script.module.peewee" />
+        <import addon="script.module.pymaybe" />
+        <import addon="xbmc.python" version="3.0.0" />
     </requires>
     <extension point="xbmc.python.pluginsource" library="resources/lib/addon.py">
         <provides>video</provides>
