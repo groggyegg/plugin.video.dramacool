@@ -9,7 +9,7 @@ import resolveurl
 from database import Drama, RecentDrama, RecentFilter, ExternalDatabase, InternalDatabase
 from dialog import FilterDialog
 from plugin import url_for
-from request import RecentlyDramaRequest, SearchRequest, StarListRequest, StarDramaRequest, DramaDetailRequest, EpisodeListRequest, ServerListRequest
+from request import RecentlyDramaRequest, SearchRequest, StarListRequest, StarDramaRequest, DramaDetailRequest, EpisodeListRequest, ServerListRequest, SubtitleRequest
 from xbmclib import *
 
 _plugins = os.path.join(translatePath(getAddonInfo('path')), 'resources/lib/resolveurl/plugins')
@@ -250,8 +250,7 @@ def _():
 
 @plugin.route('/[^/]+.html')
 def _():
-    request = ServerListRequest()
-    title, path, servers = request.get(plugin.path)
+    title, path, servers = ServerListRequest().get(plugin.path)
     position = Dialog().select(getLocalizedString(33500), [name for video, name in servers])
     item = ListItem(title)
     url = False
@@ -266,7 +265,7 @@ def _():
             if url:
                 RecentDrama.create(path=path)
                 item.setPath(url)
-                subtitle = request.get_subtitle(servers[position][0])
+                subtitle = SubtitleRequest().get(servers[position][0])
 
                 if subtitle:
                     item.setSubtitles([subtitle])

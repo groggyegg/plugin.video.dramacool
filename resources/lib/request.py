@@ -24,26 +24,31 @@ class Request(object):
             if response.status_code == 200:
                 return self.parse(response.text, path)
 
-    def get_subtitle(self, url):
-        match = search('&sub=([^&]+)', url)
-
-        if match:
-            text = self.session.get('https://embed.{}/player/sub/index.php?id={}'.format(self.domains[0], match.group(1))).text
-
-            if text:
-                webvtt = text.replace('\ufeffWEBVTT\r\n\r\n', '', 1).split('\r\n\r\n')
-
-                with open(self.tempfile, 'w') as o:
-                    for counter, text in enumerate(webvtt, start=1):
-                        o.write(f'{counter}\r\n{text}\r\n\r\n')
-
-                    return self.tempfile
-            else:
-                Dialog().notification(getLocalizedString(33503), '')
-
     @abstractmethod
     def parse(self, text, path):
         pass
+
+
+class SubtitleRequest(Request):
+    def get(self, url):
+        match = search('&sub=([^&]+)', url)
+
+        if match:
+            response = self.session.get('https://embed.{}/player/sub/index.php?id={}'.format(self.domains[0], match.group(1)))
+
+            if response.status_code == 200:
+                return self.parse(response.text, url)
+            else:
+                Dialog().notification(getLocalizedString(33503), '')
+
+    def parse(self, text, url):
+        webvtt = text.replace('\ufeffWEBVTT\r\n\r\n', '', 1).split('\r\n\r\n')
+
+        with open(self.tempfile, 'w') as o:
+            for counter, text in enumerate(webvtt, start=1):
+                o.write(f'{counter}\r\n{text}\r\n\r\n')
+
+            return self.tempfile
 
 
 class DramaListRequest(Request):
