@@ -1,6 +1,10 @@
 msgid ""
 msgstr ""
 
+# ----------------------------------------
+# Home
+# ----------------------------------------
+
 msgctxt "#33000"
 msgid "Search Drama"
 msgstr ""
@@ -49,6 +53,11 @@ msgctxt "#33011"
 msgid "Recently Filtered"
 msgstr ""
 
+# ----------------------------------------
+# Recently Watched
+# Recently Filtered
+# ----------------------------------------
+
 msgctxt "#33100"
 msgid "Remove"
 msgstr ""
@@ -56,6 +65,10 @@ msgstr ""
 msgctxt "#33101"
 msgid "Remove All"
 msgstr ""
+
+# ----------------------------------------
+# Drama List
+# ----------------------------------------
 
 msgctxt "#33200"
 msgid "Korean Drama"
@@ -88,6 +101,10 @@ msgstr ""
 msgctxt "#33207"
 msgid "Indian Drama"
 msgstr ""
+
+# ----------------------------------------
+# Drama Movie
+# ----------------------------------------
 
 msgctxt "#33300"
 msgid "Korean Movies"
@@ -125,21 +142,33 @@ msgctxt "#33308"
 msgid "Indian Movies"
 msgstr ""
 
+# ----------------------------------------
+# Filter
+# ----------------------------------------
+
 msgctxt "#33400"
-msgid "Filter By Char"
+msgid "Filter"
 msgstr ""
 
 msgctxt "#33401"
-msgid "Filter By Genre"
+msgid "Character"
 msgstr ""
 
 msgctxt "#33402"
-msgid "Filter By Status"
+msgid "Genre"
 msgstr ""
 
 msgctxt "#33403"
-msgid "Filter By Year"
+msgid "Status"
 msgstr ""
+
+msgctxt "#33404"
+msgid "Year"
+msgstr ""
+
+# ----------------------------------------
+# Resolve Episode
+# ----------------------------------------
 
 msgctxt "#33500"
 msgid "Choose Server"
@@ -157,14 +186,22 @@ msgctxt "#33503"
 msgid "Couldn't Download Subtitle"
 msgstr ""
 
+# ----------------------------------------
+# Pagination
+# ----------------------------------------
+
 msgctxt "#33600"
-msgid "Next >"
+msgid "<< First"
 msgstr ""
 
 msgctxt "#33601"
 msgid "< Previous"
 msgstr ""
 
-msgctxt "#33700"
-msgid "Filter Dramas"
+msgctxt "#33602"
+msgid "Next >"
+msgstr ""
+
+msgctxt "#33603"
+msgid "Last >>"
 msgstr ""
