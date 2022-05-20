@@ -144,7 +144,14 @@ class Drama(InternalModel, ListItem):
     def __init__(self, *args, **kwargs):
         super(Drama, self).__init__(*args, **kwargs)
         self.setLabel(kwargs.pop('title'))
-        self.setArt({'icon': kwargs['poster'], 'poster': kwargs['poster']} if 'poster' in kwargs else {})
+        self.setArt({'thumb': kwargs['poster'],
+                     'poster': kwargs['poster'],
+                     'banner': kwargs['poster'],
+                     'fanart': kwargs['poster'],
+                     'clearart': kwargs['poster'],
+                     'clearlogo': kwargs['poster'],
+                     'landscape': kwargs['poster'],
+                     'icon': kwargs['poster']} if 'poster' in kwargs else {})
         self.setInfo('video', {'title': kwargs.pop('title') if 'title' in kwargs else None,
                                'plot': kwargs.pop('plot') if 'plot' in kwargs else None,
                                'country': kwargs.pop('country') if 'country' in kwargs else None,
