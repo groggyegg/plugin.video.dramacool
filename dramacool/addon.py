@@ -287,7 +287,7 @@ def resolve_episode(name):
         executebuiltin('Playlist.Clear')
         sleep(500)
 
-    plugin.setResolvedUrl(isinstance(url, str), item)
+    plugin.setResolvedUrl(bool(url), item)
 
 
 def iterate_pagination(pagination):
