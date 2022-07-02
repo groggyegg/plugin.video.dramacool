@@ -174,16 +174,16 @@ msgctxt "#33500"
 msgid "Choose Server"
 msgstr ""
 
-msgctxt "#33501"
-msgid "Couldn't Resolve Server"
-msgstr ""
-
 msgctxt "#33502"
 msgid "Unsupported Server"
 msgstr ""
 
 msgctxt "#33503"
 msgid "Couldn't Download Subtitle"
+msgstr ""
+
+msgctxt "#33504"
+msgid "Couldn't Connect To Domain"
 msgstr ""
 
 # ----------------------------------------

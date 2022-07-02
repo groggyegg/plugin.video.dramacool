@@ -39,16 +39,18 @@ __all__ = ['SubtitleRequest', 'DramaListRequest', 'DramaDetailRequest', 'DramaDe
 
 
 class Request(object):
-    domains = 'watchasian.sh', 'www1.dramacool.fo'
+    domains = 'watchasian.cx', 'www1.dramacool.ee'
     session = Session()
     tempfile = join(getPath(), 'resources/data/tempfile')
 
     def get(self, path):
         for domain in self.domains:
-            response = self.session.get('https://{}{}'.format(domain, path))
+            response = self.session.get('https://{}{}'.format(domain, path), verify=False)
 
             if response.status_code == 200:
                 return self.parse(response.text, path)
+
+        raise ConnectionError(getLocalizedString(33504))
 
     @abstractmethod
     def parse(self, text, path):

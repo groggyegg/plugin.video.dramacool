@@ -26,7 +26,8 @@ from functools import reduce
 from json import dumps
 from operator import or_
 
-from resolveurl import resolve
+from resolveurl import resolve, scrape_supported
+from resolveurl.resolver import ResolverError
 from xbmc import Keyboard, executebuiltin, sleep
 from xbmcext import Dialog, ListItem, Plugin, getLocalizedString
 from xbmcplugin import SORT_METHOD_TITLE, SORT_METHOD_VIDEO_YEAR
@@ -260,27 +261,24 @@ def episode_list(name):
 @plugin.route('/{name:re("[^.]+.html")}')
 def resolve_episode(name):
     title, path, servers = ServerListRequest().get(plugin.getFullPath())
-    position = Dialog().select(getLocalizedString(33500), [name for video, name in servers])
+    position = Dialog().select(getLocalizedString(33500),
+                               ['[COLOR orange]{}[/COLOR]'.format(name) if scrape_supported(video, '(.+)') else name for video, name in servers])
     item = ListItem(title)
     url = False
 
     if position != -1:
         executebuiltin('ActivateWindow(busydialognocancel)')
+        url = resolve(servers[position][0])
 
-        try:
-            url = resolve(servers[position][0])
+        if url:
+            RecentDrama.create(path=path)
+            item.setPath(url)
+            subtitle = SubtitleRequest().get(servers[position][0])
 
-            if url:
-                RecentDrama.create(path=path)
-                item.setPath(url)
-                subtitle = SubtitleRequest().get(servers[position][0])
-
-                if subtitle:
-                    item.setSubtitles([subtitle])
-            else:
-                Dialog().notification(getLocalizedString(33502), '')
-        except:
-            Dialog().notification(getLocalizedString(33501), '')
+            if subtitle:
+                item.setSubtitles([subtitle])
+        else:
+            Dialog().notification(getLocalizedString(33502), '')
 
         executebuiltin('Dialog.Close(busydialognocancel)')
     else:
@@ -291,10 +289,10 @@ def resolve_episode(name):
 
 
 def iterate_pagination(pagination):
-    localizedString = {'<< First': 33600, '< Previous': 33601, 'Next >': 33602, 'Last >>': 33603}
+    localization_code = {'<< First': 33600, '< Previous': 33601, 'Next >': 33602, 'Last >>': 33603}
 
     for path, title in pagination:
-        item = ListItem(localizedString[title], iconImage='DefaultFolderBack.png' if '<' in title else '')
+        item = ListItem(localization_code[title], iconImage='DefaultFolderBack.png' if '<' in title else '')
         item.setProperty('SpecialSort', 'bottom')
         yield plugin.getUrlFor(path), item, True
 
@@ -305,6 +303,8 @@ if __name__ == '__main__':
         ExternalDatabase.create()
         InternalDatabase.connect()
         plugin()
+    except (ConnectionError, ResolverError) as e:
+        Dialog().notification(str(e), '')
     finally:
         ExternalDatabase.close()
         InternalDatabase.close()
