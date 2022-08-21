@@ -314,4 +314,3 @@ if __name__ == '__main__':
     finally:
         ExternalDatabase.close()
         InternalDatabase.close()
-        
