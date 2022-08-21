@@ -274,9 +274,6 @@ def resolve_episode(name):
 
     if position != -1:
         executebuiltin('ActivateWindow(busydialognocancel)')
-        # if position == 0:
-        #     url = resolveurl.resolve(servers[position][0])
-        # else:
         url = resolve(servers[position][0])
 
         if url:
