@@ -33,7 +33,7 @@ from bs4 import BeautifulSoup
 import json
 
 
-class GogoCdnResolver(ResolveGeneric):
+class DembedResolver(ResolveGeneric):
     name = "dembed2"
     domains = ['dembed2.com']
     pattern = r'(?://|\.)(dembed2\.com)/(?:streaming)\.php\?id=([a-zA-Z0-9-]+)'
@@ -52,10 +52,10 @@ class GogoCdnResolver(ResolveGeneric):
             result = result.decode('UTF-8')
             result = json.loads(result)
             for source in result['source']:
-                if source['file'].endswith('.m3u8'):
+                if source['file'].endswith('.m3u8') and 'dracache' in source['file']:
                     sources.append(source['file'])
             for source in result['source_bk']:
-                if source['file'].endswith('.m3u8'):
+                if source['file'].endswith('.m3u8') and 'dracache' in source['file']:
                     sources.append(source['file'])
             if len(sources) > 0:
                 return sources[0]
