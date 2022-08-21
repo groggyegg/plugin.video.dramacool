@@ -28,7 +28,7 @@ from Cryptodome.Util.Padding import unpad
 from Cryptodome.Random import get_random_bytes
 from Cryptodome.Util.Padding import pad
 from base64 import b64decode, b64encode
-from urllib.parse import urlsplit, parse_qs
+from urllib.parse import urlsplit, parse_qs, urlparse
 from bs4 import BeautifulSoup
 import json
 
@@ -36,7 +36,7 @@ import json
 class DembedResolver(ResolveGeneric):
     name = "dembed2"
     domains = ['dembed2.com']
-    pattern = r'(?://|\.)(dembed2\.com)/(?:streaming)\.php\?id=([a-zA-Z0-9-]+)'
+    pattern = r'(?://|\.)(dembed2\.com)/(?:streaming\.php|embedplus)\?id=([a-zA-Z0-9-]+)'
     key = '93422192433952489752342908585752'
     iv = '9262859232435825'
 
@@ -58,7 +58,7 @@ class DembedResolver(ResolveGeneric):
                 if source['file'].endswith('.m3u8') and 'dracache' in source['file']:
                     sources.append(source['file'])
             if len(sources) > 0:
-                return sources[0]
+                return urlparse(sources[0])._replace(scheme='http').geturl()
 
         raise ResolverError('Video cannot be located.')
 
@@ -91,7 +91,6 @@ class DembedResolver(ResolveGeneric):
         soup = BeautifulSoup(response.content, 'html.parser')
         result = soup.find('script', {"data-name": "crypto"})
         decryptedToken = self._decrypt(result['data-value'])
-
         return f'id={encryptedKey}&alias={decryptedToken}'
 
     @classmethod
