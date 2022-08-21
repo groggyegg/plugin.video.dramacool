@@ -2,6 +2,7 @@
 <addon id="plugin.video.dramacool" name="DramaCool" version="3.0.4" provider-name="groggyegg">
     <requires>
         <import addon="script.module.beautifulsoup4"/>
+        <import addon="script.module.pycryptodome" version="3.4.3"/>
         <import addon="script.module.peewee"/>
         <import addon="script.module.pymaybe"/>
         <import addon="script.module.requests"/>

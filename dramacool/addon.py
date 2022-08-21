@@ -31,11 +31,17 @@ from resolveurl.resolver import ResolverError
 from xbmc import Keyboard, executebuiltin, sleep
 from xbmcext import Dialog, ListItem, Plugin, getLocalizedString
 from xbmcplugin import SORT_METHOD_TITLE, SORT_METHOD_VIDEO_YEAR
+from xbmcaddon import Addon
 
 from database import Drama, ExternalDatabase, InternalDatabase, RecentDrama, RecentFilter
 from request import RecentlyDramaRequest, SearchRequest, StarListRequest, StarDramaRequest, DramaDetailRequest, EpisodeListRequest, ServerListRequest, SubtitleRequest
+import resolveurl
+import os
+import xbmcvfs
 
 plugin = Plugin()
+__plugins__ = os.path.join(xbmcvfs.translatePath(Addon().getAddonInfo('path')), 'dramacool/resolveurl/plugins')
+resolveurl.add_plugin_dirs(__plugins__)
 
 
 @plugin.route('/')
@@ -268,6 +274,9 @@ def resolve_episode(name):
 
     if position != -1:
         executebuiltin('ActivateWindow(busydialognocancel)')
+        # if position == 0:
+        #     url = resolveurl.resolve(servers[position][0])
+        # else:
         url = resolve(servers[position][0])
 
         if url:
@@ -308,3 +317,4 @@ if __name__ == '__main__':
     finally:
         ExternalDatabase.close()
         InternalDatabase.close()
+        
