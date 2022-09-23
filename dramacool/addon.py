@@ -29,7 +29,7 @@ from operator import or_
 from resolveurl import resolve, scrape_supported
 from resolveurl.resolver import ResolverError
 from xbmc import Keyboard, executebuiltin, sleep
-from xbmcext import Dialog, ListItem, Plugin, getLocalizedString, getPath
+from xbmcext import Dialog, ListItem, Plugin, getLocalizedString, getPath, getSettingInt
 from xbmcplugin import SORT_METHOD_TITLE, SORT_METHOD_VIDEO_YEAR
 
 from database import Drama, ExternalDatabase, InternalDatabase, RecentDrama, RecentFilter
@@ -258,32 +258,71 @@ def episode_list(name):
     plugin.setDirectoryItems(items, 'episodes')
 
 
+selected_servers = [
+    getLocalizedString(33507),
+    getLocalizedString(33508),
+    getLocalizedString(33509),
+    getLocalizedString(33510),
+    getLocalizedString(33511),
+    getLocalizedString(33512),
+    getLocalizedString(33513),
+    getLocalizedString(33514),
+]
+
+
 @plugin.route('/{name:re("[^.]+.html")}')
 def resolve_episode(name):
     title, path, servers = ServerListRequest().get(plugin.getFullPath())
-    position = Dialog().select(getLocalizedString(33500),
-                               ['[COLOR orange]{}[/COLOR]'.format(name) if scrape_supported(video, '(.+)') else name for video, name in servers])
+    supported_servers = [
+        server for server in servers
+        if scrape_supported(server[0], '(.+)')
+    ]
+    if supported_servers:
+        selected_server = selected_servers[getSettingInt('preferredServer')]
+        position = [
+            idx for idx, server in enumerate(supported_servers)
+            if server[1] == selected_server
+        ]
+        position = position[0] if position else None
+    else:
+        position = -1
     item = ListItem(title)
     url = False
 
-    if position != -1:
-        executebuiltin('ActivateWindow(busydialognocancel)')
-        url = resolve(servers[position][0])
+    while True:
+        if position is None:
+            pass
+        elif position != -1:
+            try:
+                executebuiltin('ActivateWindow(busydialognocancel)')
+                url = resolve(supported_servers[position][0])
 
-        if url:
-            RecentDrama.create(path=path)
-            item.setPath(url)
-            subtitle = SubtitleRequest().get(servers[position][0])
+                if url:
+                    RecentDrama.create(path=path)
+                    item.setPath(url)
+                    subtitle = SubtitleRequest().get(supported_servers[position][0])
 
-            if subtitle:
-                item.setSubtitles([subtitle])
+                    if subtitle:
+                        item.setSubtitles([subtitle])
+
+                    executebuiltin('Dialog.Close(busydialognocancel)')
+                    break
+                else:
+                    Dialog().notification(getLocalizedString(33502), '')
+
+            except ResolverError as e:
+                Dialog().notification(str(e), '')
+
+            executebuiltin('Dialog.Close(busydialognocancel)')
         else:
-            Dialog().notification(getLocalizedString(33502), '')
+            executebuiltin('Playlist.Clear')
+            sleep(500)
+            break
 
-        executebuiltin('Dialog.Close(busydialognocancel)')
-    else:
-        executebuiltin('Playlist.Clear')
-        sleep(500)
+        position = Dialog().select(
+            getLocalizedString(33500),
+            [name for _, name in supported_servers]
+        )
 
     plugin.setResolvedUrl(bool(url), item)
 

@@ -186,6 +186,46 @@ msgctxt "#33504"
 msgid "Couldn't Connect To Domain"
 msgstr ""
 
+msgctxt "#33505"
+msgid "Using Server"
+msgstr ""
+
+msgctxt "#33506"
+msgid "Preferred Server"
+msgstr ""
+
+msgctxt "#33507"
+msgid "Always choose"
+msgstr ""
+
+msgctxt "#33508"
+msgid "Standard Server"
+msgstr ""
+
+msgctxt "#33509"
+msgid "Asianload"
+msgstr ""
+
+msgctxt "#33510"
+msgid "StreamSB"
+msgstr ""
+
+msgctxt "#33511"
+msgid "Doodstream"
+msgstr ""
+
+msgctxt "#33512"
+msgid "Streamtape"
+msgstr ""
+
+msgctxt "#33513"
+msgid "Mixdrop"
+msgstr ""
+
+msgctxt "#33514"
+msgid "Xstreamcdn"
+msgstr ""
+
 # ----------------------------------------
 # Pagination
 # ----------------------------------------
