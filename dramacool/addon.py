@@ -29,7 +29,7 @@ from operator import or_
 from resolveurl import resolve, scrape_supported
 from resolveurl.resolver import ResolverError
 from xbmc import Keyboard, executebuiltin, sleep
-from xbmcext import Dialog, ListItem, Plugin, getLocalizedString
+from xbmcext import Dialog, ListItem, Plugin, getLocalizedString, getPath
 from xbmcplugin import SORT_METHOD_TITLE, SORT_METHOD_VIDEO_YEAR
 
 from database import Drama, ExternalDatabase, InternalDatabase, RecentDrama, RecentFilter
@@ -288,12 +288,38 @@ def resolve_episode(name):
     plugin.setResolvedUrl(bool(url), item)
 
 
-def iterate_pagination(pagination):
-    localization_code = {'<< First': 33600, '< Previous': 33601, 'Next >': 33602, 'Last >>': 33603}
+pagination_entries = {
+    getLocalizedString(33600): {
+        'localization_code': 33600,
+        'icon': 'first.png',
+        'sort_location': 'top',
+    },
+    getLocalizedString(33601): {
+        'localization_code': 33601,
+        'icon': 'previous.png',
+        'sort_location': 'top',
+    },
+    getLocalizedString(33602): {
+        'localization_code': 33602,
+        'icon': 'next.png',
+        'sort_location': 'bottom',
+    },
+    getLocalizedString(33603): {
+        'localization_code': 33603,
+        'icon': 'last.png',
+        'sort_location': 'bottom',
+    },
+    'icon_path': getPath() + '/resources/icons/{0}'
+}
 
+
+def iterate_pagination(pagination):
     for path, title in pagination:
-        item = ListItem(localization_code[title], iconImage='DefaultFolderBack.png' if '<' in title else '')
-        item.setProperty('SpecialSort', 'bottom')
+        entry = pagination_entries[title]
+        item = ListItem(
+            entry['localization_code'],
+            iconImage=pagination_entries['icon_path'].format(entry['icon']))
+        item.setProperty('SpecialSort', entry['sort_location'])
         yield plugin.getUrlFor(path), item, True
 
 
