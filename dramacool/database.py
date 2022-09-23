@@ -22,13 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from datetime import datetime, timedelta
 from json import loads, dumps
 from os import makedirs, remove
 from os.path import exists, join
+import re
 
 from peewee import CharField, Model, SmallIntegerField, SQL, SqliteDatabase, TextField
 from playhouse.sqlite_ext import DateTimeField
 from xbmcext import ListItem, getPath, getProfilePath
+import xbmc
 
 __all__ = ['Drama', 'ExternalDatabase', 'InternalDatabase', 'RecentDrama', 'RecentFilter']
 
@@ -143,20 +146,55 @@ class Drama(InternalModel, ListItem):
 
     def __init__(self, *args, **kwargs):
         super(Drama, self).__init__(*args, **kwargs)
-        self.setLabel(kwargs.pop('title'))
-        self.setArt({'thumb': kwargs['poster'],
-                     'poster': kwargs['poster'],
-                     'banner': kwargs['poster'],
-                     'fanart': kwargs['poster'],
-                     'clearart': kwargs['poster'],
-                     'landscape': kwargs['poster'],
-                     'icon': kwargs['poster']} if 'poster' in kwargs else {})
-        self.setInfo('video', {'title': kwargs.pop('title') if 'title' in kwargs else None,
-                               'plot': kwargs.pop('plot') if 'plot' in kwargs else None,
-                               'country': kwargs.pop('country') if 'country' in kwargs else None,
-                               'status': kwargs.pop('status') if 'status' in kwargs else None,
-                               'genre': kwargs.pop('genre') if 'genre' in kwargs else None,
-                               'year': kwargs.pop('year') if 'year' in kwargs else None})
+
+        title = kwargs.get('title', '')
+        self.setLabel(title)
+
+        year = kwargs.get('year', '')
+        if not year and title:
+            year = re.match('.*[(](\d+)[)].*', title);
+            year = year.group(1) if year else ''
+
+        dateadded = kwargs.get('dateadded', '')
+        if 'ago' in dateadded:
+            offset = re.sub('[^\d]', '', dateadded)
+
+            if 'minutes' in dateadded:
+                minutes = int(offset)
+                hours = 0
+                days = 0
+            elif 'hour' in dateadded:
+                minutes = 0
+                hours = int(offset)
+                days = 0
+            elif 'day' in dateadded:
+                minutes = 0
+                hours = 0
+                days = int(offset)
+            else:
+                minutes = 0
+                hours = 0
+                days = 0
+
+            now = datetime.now().replace(microsecond=0)
+            dateadded = str(now - timedelta(minutes=minutes, hours=hours, days=days))
+
+        poster = kwargs.get('poster', '')
+        self.setArt({'thumb': poster,
+                     'poster': poster,
+                     'banner': poster,
+                     'fanart': poster,
+                     'clearart': poster,
+                     'landscape': poster,
+                     'icon': poster})
+
+        self.setInfo('video', {'title': title,
+                               'plot': kwargs.get('plot', ''),
+                               'country': kwargs.get('country', ''),
+                               'status': kwargs.get('status', ''),
+                               'genre': kwargs.get('genre', ''),
+                               'year': year,
+                               'dateadded': dateadded})
 
 
 class RecentDrama(ExternalModel):

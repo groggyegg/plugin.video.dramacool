@@ -30,7 +30,7 @@ from resolveurl import resolve, scrape_supported
 from resolveurl.resolver import ResolverError
 from xbmc import Keyboard, executebuiltin, sleep
 from xbmcext import Dialog, ListItem, Plugin, getLocalizedString, getPath, getSettingInt
-from xbmcplugin import SORT_METHOD_TITLE, SORT_METHOD_VIDEO_YEAR
+from xbmcplugin import SORT_METHOD_DATEADDED, SORT_METHOD_LASTPLAYED, SORT_METHOD_LABEL_IGNORE_THE, SORT_METHOD_VIDEO_YEAR
 
 from database import Drama, ExternalDatabase, InternalDatabase, RecentDrama, RecentFilter
 from request import RecentlyDramaRequest, SearchRequest, StarListRequest, StarDramaRequest, DramaDetailRequest, EpisodeListRequest, ServerListRequest, SubtitleRequest
@@ -73,7 +73,11 @@ def search_type(type, keyword, page):
         items.append((plugin.getUrlFor(path), item if item else Drama.create(**DramaDetailRequest().get(path)), True))
 
     items.extend(iterate_pagination(pagination))
-    plugin.setDirectoryItems(items, 'tvshows') if type == 'movies' else plugin.setDirectoryItems(items)
+    plugin.setDirectoryItems(
+        items,
+        content=('tvshows' if type == 'movies' else None),
+        sortMethods=[SORT_METHOD_LABEL_IGNORE_THE]
+    )
 
 
 @plugin.route('/recently-viewed')
@@ -87,7 +91,7 @@ def recently_viewed():
                                   (33101, 'RunPlugin({})'.format(plugin.getUrlFor('/recently-viewed', delete='%')))])
         items.append((plugin.getUrlFor(item.path), item, True))
 
-    plugin.setDirectoryItems(items, 'tvshows')
+    plugin.setDirectoryItems(items, 'tvshows', sortMethods=[SORT_METHOD_LASTPLAYED, SORT_METHOD_LABEL_IGNORE_THE])
 
 
 @plugin.route('/recently-filtered')
@@ -128,7 +132,7 @@ def recently_added(page):
         items.append((plugin.getUrlFor(path), item, False))
 
     items.extend(iterate_pagination(pagination))
-    plugin.setDirectoryItems(items, 'episodes')
+    plugin.setDirectoryItems(items, 'episodes', sortMethods=[SORT_METHOD_DATEADDED, SORT_METHOD_LABEL_IGNORE_THE, SORT_METHOD_VIDEO_YEAR])
 
 
 @plugin.route('/drama-list')
@@ -204,7 +208,7 @@ def drama_list(label, characters=[], genres=[], statuses=[], years=[], category=
     for item in Drama.select().where(expression):
         items.append((plugin.getUrlFor(item.path), item, True))
 
-    plugin.setDirectoryItems(items, 'tvshows', [SORT_METHOD_TITLE, SORT_METHOD_VIDEO_YEAR])
+    plugin.setDirectoryItems(items, 'tvshows', sortMethods=[SORT_METHOD_LABEL_IGNORE_THE, SORT_METHOD_VIDEO_YEAR])
 
 
 @plugin.route('/most-popular-drama')
@@ -218,7 +222,7 @@ def most_popular_drama(page):
         items.append((plugin.getUrlFor(path), item, True))
 
     items.extend(iterate_pagination(pagination))
-    plugin.setDirectoryItems(items, 'tvshows')
+    plugin.setDirectoryItems(items, 'tvshows', sortMethods=[SORT_METHOD_LABEL_IGNORE_THE])
 
 
 @plugin.route('/list-star.html')
@@ -231,7 +235,7 @@ def star_list(page):
         items.append((plugin.getUrlFor(path), item, True))
 
     items.extend(iterate_pagination(pagination))
-    plugin.setDirectoryItems(items)
+    plugin.setDirectoryItems(items, sortMethods=[SORT_METHOD_LABEL_IGNORE_THE])
 
 
 @plugin.route('/star/{name}')
@@ -243,7 +247,7 @@ def star_drama(name):
         item = Drama.get_or_none(Drama.path == path)
         items.append((plugin.getUrlFor(path), item if item else Drama(title=title, poster=poster), True))
 
-    plugin.setDirectoryItems(items, 'tvshows', [SORT_METHOD_TITLE, SORT_METHOD_VIDEO_YEAR])
+    plugin.setDirectoryItems(items, 'tvshows', sortMethods=[SORT_METHOD_LABEL_IGNORE_THE, SORT_METHOD_VIDEO_YEAR])
 
 
 @plugin.route('/drama-detail/{name}')
@@ -255,7 +259,7 @@ def episode_list(name):
         item.setProperty('IsPlayable', 'true')
         items.append((plugin.getUrlFor(path), item, False))
 
-    plugin.setDirectoryItems(items, 'episodes')
+    plugin.setDirectoryItems(items, 'episodes', sortMethods=[SORT_METHOD_LABEL_IGNORE_THE])
 
 
 selected_servers = [
