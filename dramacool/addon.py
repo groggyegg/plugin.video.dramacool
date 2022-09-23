@@ -364,12 +364,12 @@ def iterate_pagination(pagination):
         yield plugin.getUrlFor(path), item, True
 
 
-if __name__ == '__main__':
+def run(argv):
     try:
         ExternalDatabase.connect()
         ExternalDatabase.create()
         InternalDatabase.connect()
-        plugin()
+        plugin(argv)
     except (ConnectionError, ResolverError) as e:
         Dialog().notification(str(e), '')
     finally:

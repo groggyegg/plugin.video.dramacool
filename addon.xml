@@ -9,10 +9,11 @@
         <import addon="script.module.six"/>
         <import addon="script.module.xbmcext" version="1.2.1"/>
     </requires>
-    <extension point="xbmc.python.pluginsource" library="dramacool/addon.py">
+    <extension point="xbmc.python.pluginsource" library="dramacool/plugin_entry.py">
         <provides>video</provides>
     </extension>
     <extension point="xbmc.addon.metadata">
+        <reuselanguageinvoker>true</reuselanguageinvoker>
         <summary lang="en_GB">Video plugin for DramaCool</summary>
         <description lang="en_GB">Watch Asian Drama and Korean Show with English subtitles.</description>
         <platform>all</platform>
