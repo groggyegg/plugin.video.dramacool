@@ -123,8 +123,9 @@ class RecentlyDramaRequest(Request):
 
     @staticmethod
     def pagination(tag, path):
-        return [(urlparse(path).path + a.attrs['href'], a.text)
-                for a in iter(li.find('a') for li in maybe(tag).find_all('li', {'class': ['first', 'previous', 'next', 'last']}).or_else([]))]
+        page_links = ['first', 'previous', 'next', 'last']
+        return [(urlparse(path).path + a.attrs['href'], next(filter(lambda class_: class_ in page_links, classes), None))
+                for a, classes in iter((li.find('a'), li.attrs['class']) for li in maybe(tag).find_all('li', {'class': page_links}).or_else([]))]
 
 
 class SearchRequest(RecentlyDramaRequest):

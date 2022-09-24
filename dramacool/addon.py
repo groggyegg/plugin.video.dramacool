@@ -29,7 +29,7 @@ from operator import or_
 from resolveurl import resolve, scrape_supported
 from resolveurl.resolver import ResolverError
 from xbmc import Keyboard, executebuiltin, sleep
-from xbmcext import Dialog, ListItem, Plugin, getLocalizedString, getPath, getSettingInt
+from xbmcext import Dialog, ListItem, Plugin, getLocalizedString, getPath, getSettingString
 from xbmcplugin import SORT_METHOD_DATEADDED, SORT_METHOD_LASTPLAYED, SORT_METHOD_LABEL_IGNORE_THE, SORT_METHOD_VIDEO_YEAR
 
 from database import Drama, ExternalDatabase, InternalDatabase, RecentDrama, RecentFilter
@@ -262,107 +262,95 @@ def episode_list(name):
     plugin.setDirectoryItems(items, 'episodes', sortMethods=[SORT_METHOD_LABEL_IGNORE_THE])
 
 
-selected_servers = [
-    getLocalizedString(33507),
-    getLocalizedString(33508),
-    getLocalizedString(33509),
-    getLocalizedString(33510),
-    getLocalizedString(33511),
-    getLocalizedString(33512),
-    getLocalizedString(33513),
-    getLocalizedString(33514),
-]
-
-
 @plugin.route('/{name:re("[^.]+.html")}')
 def resolve_episode(name):
     title, path, servers = ServerListRequest().get(plugin.getFullPath())
-    supported_servers = [
-        server for server in servers
-        if scrape_supported(server[0], '(.+)')
-    ]
-    if supported_servers:
-        selected_server = selected_servers[getSettingInt('preferredServer')]
-        position = [
-            idx for idx, server in enumerate(supported_servers)
-            if server[1] == selected_server
-        ]
-        position = position[0] if position else None
-    else:
-        position = -1
+
+    supported_servers = tuple(filter(
+        lambda server: scrape_supported(server[0], '(.+)'),
+        servers
+    )) if servers else None
+
+    selected_server = next(filter(
+        lambda server: server[1][1] == getSettingString('preferredServer'),
+        enumerate(supported_servers)
+    ), [None])[0] if supported_servers else -1
+
     item = ListItem(title)
     url = False
 
-    while True:
-        if position is None:
-            pass
-        elif position != -1:
+    while selected_server != -1:
+        if selected_server is not None:
+            executebuiltin('ActivateWindow(busydialognocancel)')
             try:
-                executebuiltin('ActivateWindow(busydialognocancel)')
-                url = resolve(supported_servers[position][0])
-
-                if url:
-                    RecentDrama.create(path=path)
-                    item.setPath(url)
-                    subtitle = SubtitleRequest().get(supported_servers[position][0])
-
-                    if subtitle:
-                        item.setSubtitles([subtitle])
-
-                    executebuiltin('Dialog.Close(busydialognocancel)')
-                    break
-                else:
-                    Dialog().notification(getLocalizedString(33502), '')
-
+                url = resolve(supported_servers[selected_server][0])
             except ResolverError as e:
                 Dialog().notification(str(e), '')
+            finally:
+                executebuiltin('Dialog.Close(busydialognocancel)')
 
-            executebuiltin('Dialog.Close(busydialognocancel)')
-        else:
-            executebuiltin('Playlist.Clear')
-            sleep(500)
+            if not url:
+                Dialog().notification(getLocalizedString(33502), '')
+                selected_server = None
+                continue
+
+            RecentDrama.create(path=path)
+            item.setPath(url)
+
+            executebuiltin('ActivateWindow(busydialognocancel)')
+            try:
+                subtitle = SubtitleRequest().get(supported_servers[selected_server][0])
+                if subtitle:
+                    item.setSubtitles([subtitle])
+            except ConnectionError as e:
+                Dialog().notification(str(e), '')
+            finally:
+                executebuiltin('Dialog.Close(busydialognocancel)')
             break
 
-        position = Dialog().select(
+        selected_server = Dialog().select(
             getLocalizedString(33500),
-            [name for _, name in supported_servers]
+            [server_name for _, server_name in supported_servers]
         )
+    else:
+        Dialog().notification(getLocalizedString(33502), '')
+        executebuiltin('Playlist.Clear')
+        sleep(500)
 
     plugin.setResolvedUrl(bool(url), item)
 
 
-pagination_entries = {
-    getLocalizedString(33600): {
+page_links = {
+    'first': {
         'localization_code': 33600,
-        'icon': 'first.png',
         'sort_location': 'top',
     },
-    getLocalizedString(33601): {
+    'previous': {
         'localization_code': 33601,
-        'icon': 'previous.png',
         'sort_location': 'top',
     },
-    getLocalizedString(33602): {
+    'next': {
         'localization_code': 33602,
-        'icon': 'next.png',
         'sort_location': 'bottom',
     },
-    getLocalizedString(33603): {
+    'last': {
         'localization_code': 33603,
-        'icon': 'last.png',
         'sort_location': 'bottom',
     },
-    'icon_path': getPath() + '/resources/icons/{0}'
+    'icon_path': getPath() + '/resources/icons/{0}.png'
 }
 
 
 def iterate_pagination(pagination):
-    for path, title in pagination:
-        entry = pagination_entries[title]
+    for path, page in pagination:
+        if not page:
+            continue
+        page_link = page_links[page]
         item = ListItem(
-            entry['localization_code'],
-            iconImage=pagination_entries['icon_path'].format(entry['icon']))
-        item.setProperty('SpecialSort', entry['sort_location'])
+            page_link['localization_code'],
+            iconImage=page_links['icon_path'].format(page)
+        )
+        item.setProperty('SpecialSort', page_link['sort_location'])
         yield plugin.getUrlFor(path), item, True
 
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
 	<category label="33500"> <!-- Choose Server -->
-		<setting label="33506" type="enum" id="preferredServer" lvalues="33507|33508|33509|33510|33511|33512|33513|33514" default="2"/>
+		<setting label="33506" type="labelenum" id="preferredServer" lvalues="33507|33508|33509|33510|33511|33512|33513|33514" default="2"/>
 	</category>
 </settings>

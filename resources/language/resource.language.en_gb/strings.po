@@ -198,30 +198,37 @@ msgctxt "#33507"
 msgid "Always choose"
 msgstr ""
 
+# Literal server name - do not translate
 msgctxt "#33508"
 msgid "Standard Server"
 msgstr ""
 
+# Literal server name - do not translate
 msgctxt "#33509"
 msgid "Asianload"
 msgstr ""
 
+# Literal server name - do not translate
 msgctxt "#33510"
 msgid "StreamSB"
 msgstr ""
 
+# Literal server name - do not translate
 msgctxt "#33511"
 msgid "Doodstream"
 msgstr ""
 
+# Literal server name - do not translate
 msgctxt "#33512"
 msgid "Streamtape"
 msgstr ""
 
+# Literal server name - do not translate
 msgctxt "#33513"
 msgid "Mixdrop"
 msgstr ""
 
+# Literal server name - do not translate
 msgctxt "#33514"
 msgid "Xstreamcdn"
 msgstr ""
