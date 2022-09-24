@@ -31,7 +31,6 @@ import re
 from peewee import CharField, Model, SmallIntegerField, SQL, SqliteDatabase, TextField
 from playhouse.sqlite_ext import DateTimeField
 from xbmcext import ListItem, getPath, getProfilePath
-import xbmc
 
 __all__ = ['Drama', 'ExternalDatabase', 'InternalDatabase', 'RecentDrama', 'RecentFilter']
 
@@ -141,6 +140,9 @@ class Drama(InternalModel, ListItem):
     year = SmallIntegerField(null=True, index=True)
     mediatype = CharField(null=True, index=True)
 
+    year_re = re.compile(r'.*[(](\d+)[)].*')
+    dateadded_re = re.compile(r'[^\d]')
+
     def __new__(cls, *args, **kwargs):
         return super(Drama, cls).__new__(cls)
 
@@ -152,29 +154,20 @@ class Drama(InternalModel, ListItem):
 
         year = kwargs.get('year', '')
         if not year and title:
-            year = re.match('.*[(](\d+)[)].*', title);
+            year = self.year_re.match(title)
             year = year.group(1) if year else ''
 
         dateadded = kwargs.get('dateadded', '')
         if 'ago' in dateadded:
-            offset = re.sub('[^\d]', '', dateadded)
+            offset = self.dateadded_re.sub('', dateadded)
 
+            minutes = hours = days = 0
             if 'minutes' in dateadded:
                 minutes = int(offset)
-                hours = 0
-                days = 0
             elif 'hour' in dateadded:
-                minutes = 0
                 hours = int(offset)
-                days = 0
             elif 'day' in dateadded:
-                minutes = 0
-                hours = 0
                 days = int(offset)
-            else:
-                minutes = 0
-                hours = 0
-                days = 0
 
             now = datetime.now().replace(microsecond=0)
             dateadded = str(now - timedelta(minutes=minutes, hours=hours, days=days))
