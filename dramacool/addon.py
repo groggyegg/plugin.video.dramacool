@@ -271,7 +271,7 @@ def resolve_episode(name):
         servers
     )) if servers else None
 
-    selected_server = next(filter(
+    server_selection = next(filter(
         lambda server: server[1][1] == getSettingString('preferredServer'),
         enumerate(supported_servers)
     ), [None])[0] if supported_servers else -1
@@ -279,27 +279,29 @@ def resolve_episode(name):
     item = ListItem(title)
     url = False
 
-    while selected_server != -1:
-        if selected_server is not None:
+    while server_selection != -1:
+        if server_selection is not None:
             executebuiltin('ActivateWindow(busydialognocancel)')
             try:
-                url = resolve(supported_servers[selected_server][0])
+                selected_server = supported_servers[server_selection]
+                url = resolve(selected_server[0])
             except ResolverError as e:
                 Dialog().notification(str(e), '')
             finally:
                 executebuiltin('Dialog.Close(busydialognocancel)')
 
             if not url:
-                Dialog().notification(getLocalizedString(33502), '')
-                selected_server = None
+                Dialog().notification(getLocalizedString(33502), selected_server[1])
+                server_selection = None
                 continue
 
+            Dialog().notification(getLocalizedString(33505), selected_server[1])
             RecentDrama.create(path=path)
             item.setPath(url)
 
             executebuiltin('ActivateWindow(busydialognocancel)')
             try:
-                subtitle = SubtitleRequest().get(supported_servers[selected_server][0])
+                subtitle = SubtitleRequest().get(selected_server[0])
                 if subtitle:
                     item.setSubtitles([subtitle])
             except ConnectionError as e:
@@ -308,7 +310,7 @@ def resolve_episode(name):
                 executebuiltin('Dialog.Close(busydialognocancel)')
             break
 
-        selected_server = Dialog().select(
+        server_selection = Dialog().select(
             getLocalizedString(33500),
             [server_name for _, server_name in supported_servers]
         )
