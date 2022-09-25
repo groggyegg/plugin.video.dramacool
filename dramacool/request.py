@@ -145,7 +145,7 @@ class ServerListRequest(Request):
         soup = BeautifulSoup(text, 'html.parser', parse_only=SoupStrainer('div', {'class': 'block watch-drama'}))
         return (soup.find('h1').text,
                 soup.find('a').attrs['href'],
-                [(urlparse(li.attrs['data-video'], 'https').geturl(), li.next.strip()) for li in soup.find_all('li', {'data-video': compile('//')})])
+                {li.next.strip(): urlparse(li.attrs['data-video'], 'https').geturl() for li in soup.find_all('li', {'data-video': compile('//')})})
 
 
 class StarListRequest(RecentlyDramaRequest):

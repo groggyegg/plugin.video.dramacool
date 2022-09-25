@@ -266,55 +266,62 @@ def episode_list(name):
 def resolve_episode(name):
     title, path, servers = ServerListRequest().get(plugin.getFullPath())
 
-    supported_servers = [
-        server for server in servers
-        if scrape_supported(server[0], '(.+)')
-    ] if servers else None
+    supported_servers = {
+        name: url for name, url in servers.items()
+        if scrape_supported(url, '(.+)')
+    } if servers else None
 
-    preferred_server = getSettingString('preferredServer')
-    server_selection = ([
-        idx for idx, (_, server_name) in enumerate(supported_servers)
-        if server_name == preferred_server
-    ] or [None])[0] if supported_servers else -1
+    if supported_servers:
+        server_selections = tuple(supported_servers)
+        preferred_server = getSettingString('preferredServer')
+        server_selection = (
+            server_selections.index(preferred_server)
+            if preferred_server in server_selections else None
+        )
+    else:
+        server_selection = -1
 
     item = ListItem(title)
     url = False
 
     while server_selection != -1:
-        if server_selection is not None:
-            executebuiltin('ActivateWindow(busydialognocancel)')
-            try:
-                selected_server = supported_servers[server_selection]
-                url = resolve(selected_server[0])
-            except ResolverError as e:
-                Dialog().notification(str(e), '')
-            finally:
-                executebuiltin('Dialog.Close(busydialognocancel)')
+        if server_selection is None:
+            server_selection = Dialog().select(
+                getLocalizedString(33500),
+                server_selections
+            )
+            continue
 
-            if not url:
-                Dialog().notification(getLocalizedString(33502), selected_server[1])
-                server_selection = None
-                continue
+        server_selection = server_selections[server_selection]
+        selected_server = supported_servers[server_selection]
 
-            Dialog().notification(getLocalizedString(33505), selected_server[1])
-            RecentDrama.create(path=path)
-            item.setPath(url)
+        executebuiltin('ActivateWindow(busydialognocancel)')
+        try:
+            url = resolve(selected_server)
+        except ResolverError as e:
+            Dialog().notification(str(e), '')
+        finally:
+            executebuiltin('Dialog.Close(busydialognocancel)')
 
-            executebuiltin('ActivateWindow(busydialognocancel)')
-            try:
-                subtitle = SubtitleRequest().get(selected_server[0])
-                if subtitle:
-                    item.setSubtitles([subtitle])
-            except ConnectionError as e:
-                Dialog().notification(str(e), '')
-            finally:
-                executebuiltin('Dialog.Close(busydialognocancel)')
-            break
+        if not url:
+            Dialog().notification(getLocalizedString(33502), server_selection)
+            server_selection = None
+            continue
 
-        server_selection = Dialog().select(
-            getLocalizedString(33500),
-            [server_name for _, server_name in supported_servers]
-        )
+        Dialog().notification(getLocalizedString(33505), server_selection)
+        RecentDrama.create(path=path)
+        item.setPath(url)
+
+        executebuiltin('ActivateWindow(busydialognocancel)')
+        try:
+            subtitle = SubtitleRequest().get(selected_server)
+            if subtitle:
+                item.setSubtitles([subtitle])
+        except ConnectionError as e:
+            Dialog().notification(str(e), '')
+        finally:
+            executebuiltin('Dialog.Close(busydialognocancel)')
+        break
     else:
         Dialog().notification(getLocalizedString(33502), '')
         executebuiltin('Playlist.Clear')
