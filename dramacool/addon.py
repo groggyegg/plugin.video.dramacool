@@ -266,15 +266,16 @@ def episode_list(name):
 def resolve_episode(name):
     title, path, servers = ServerListRequest().get(plugin.getFullPath())
 
-    supported_servers = tuple(filter(
-        lambda server: scrape_supported(server[0], '(.+)'),
-        servers
-    )) if servers else None
+    supported_servers = [
+        server for server in servers
+        if scrape_supported(server[0], '(.+)')
+    ] if servers else None
 
-    server_selection = next(filter(
-        lambda server: server[1][1] == getSettingString('preferredServer'),
-        enumerate(supported_servers)
-    ), [None])[0] if supported_servers else -1
+    preferred_server = getSettingString('preferredServer')
+    server_selection = ([
+        idx for idx, (_, server_name) in enumerate(supported_servers)
+        if server_name == preferred_server
+    ] or [None])[0] if supported_servers else -1
 
     item = ListItem(title)
     url = False
