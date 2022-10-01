@@ -24,12 +24,13 @@ SOFTWARE.
 
 from abc import abstractmethod
 from os.path import join
-from re import compile, search
+from re import compile as re_compile, search
 
 from bs4 import BeautifulSoup
 from bs4.element import SoupStrainer, NavigableString
 from pymaybe import maybe
 from requests import Session
+from requests.exceptions import HTTPError
 from requests.utils import requote_uri
 from six.moves.urllib.parse import urlparse
 from xbmcext import Dialog, getLocalizedString, getPath
@@ -38,19 +39,26 @@ __all__ = ['SubtitleRequest', 'DramaListRequest', 'DramaDetailRequest', 'DramaDe
            'SearchRequest', 'EpisodeListRequest', 'ServerListRequest', 'StarListRequest', 'StarDramaRequest']
 
 
-class Request(object):
+class Request():
     domains = 'watchasian.cx', 'www1.dramacool.ee'
     session = Session()
     tempfile = join(getPath(), 'resources/data/tempfile')
 
     def get(self, path):
         for domain in self.domains:
-            response = self.session.get('https://{}{}'.format(domain, path), verify=False)
+            with self.session as session:
+                response = session.get('https://{}{}'.format(domain, path))
 
-            if response.status_code == 200:
-                return self.parse(response.text, path)
+            try:
+                response.raise_for_status()
+            except HTTPError as exc:
+                Dialog().notification(getLocalizedString(33504), exc)
+                return None
 
-        raise ConnectionError(getLocalizedString(33504))
+            return self.parse(response.text, path)
+
+        Dialog().notification(getLocalizedString(33504), '')
+        return None
 
     @abstractmethod
     def parse(self, text, path):
@@ -58,30 +66,36 @@ class Request(object):
 
 
 class SubtitleRequest(Request):
-    def get(self, url):
-        match = search('&sub=([^&]+)', url)
+    def get(self, path):
+        match = search('&sub=([^&]+)', path)
 
-        if match:
-            response = self.session.get('https://embed.{}/player/sub/index.php?id={}'.format(self.domains[0], match.group(1)))
+        if not match:
+            return None
 
-            if response.status_code == 200:
-                return self.parse(response.text, url)
-            else:
-                Dialog().notification(getLocalizedString(33503), '')
+        with self.session as session:
+            response = session.get('https://embed.{}/player/sub/index.php?id={}'.format(self.domains[0], match.group(1)))
 
-    def parse(self, text, url):
+        try:
+            response.raise_for_status()
+        except HTTPError as exc:
+            Dialog().notification(getLocalizedString(33503), exc)
+            return None
+
+        return self.parse(response.text, path)
+
+    def parse(self, text, path):
         webvtt = text.replace('\ufeffWEBVTT\r\n\r\n', '', 1).split('\r\n\r\n')
 
-        with open(self.tempfile, 'w') as o:
-            for counter, text in enumerate(webvtt, start=1):
-                o.write('{}\r\n{}\r\n\r\n'.format(counter, text))
+        with open(self.tempfile, 'w', encoding='utf-8') as tmpfile:
+            for counter, text_segment in enumerate(webvtt, start=1):
+                tmpfile.write('{}\r\n{}\r\n\r\n'.format(counter, text_segment))
 
-            return self.tempfile
+        return self.tempfile
 
 
 class DramaListRequest(Request):
     def get(self, path='/drama-list'):
-        return super(DramaListRequest, self).get(path)
+        return super().get(path)
 
     def parse(self, text, path):
         soup = BeautifulSoup(text, 'html.parser', parse_only=SoupStrainer('li', {'data-genre': True}))
@@ -94,10 +108,10 @@ class DramaDetailRequest(Request):
         poster = maybe(soup.find('img')).attrs['src'].or_none()
         title = soup.find('h1').text.strip()
         plot = ' '.join(p.text.strip() for p in soup.find_all(self.plot))
-        country = maybe(soup.find('a', {'href': compile('^/country/')})).text.or_none()
-        status = maybe(soup.find('a', {'href': compile('^/popular-')})).text.or_none()
-        year = maybe(soup.find('a', {'href': compile('^/released-in-')})).text.or_none()
-        genre = [a.text for a in soup.find_all('a', {'href': compile('^/genre/')})]
+        country = maybe(soup.find('a', {'href': re_compile('^/country/')})).text.or_none()
+        status = maybe(soup.find('a', {'href': re_compile('^/popular-')})).text.or_none()
+        year = maybe(soup.find('a', {'href': re_compile('^/released-in-')})).text.or_none()
+        genre = [a.text for a in soup.find_all('a', {'href': re_compile('^/genre/')})]
         return {'path': path, 'poster': requote_uri(poster) if poster else poster, 'title': title, 'plot': plot,
                 'country': country, 'status': status, 'year': None if year == '0' else year, 'genre': genre}
 
@@ -145,7 +159,7 @@ class ServerListRequest(Request):
         soup = BeautifulSoup(text, 'html.parser', parse_only=SoupStrainer('div', {'class': 'block watch-drama'}))
         return (soup.find('h1').text,
                 soup.find('a').attrs['href'],
-                {li.next.strip(): urlparse(li.attrs['data-video'], 'https').geturl() for li in soup.find_all('li', {'data-video': compile('//')})})
+                {li.next.strip(): urlparse(li.attrs['data-video'], 'https').geturl() for li in soup.find_all('li', {'data-video': re_compile('//')})})
 
 
 class StarListRequest(RecentlyDramaRequest):
