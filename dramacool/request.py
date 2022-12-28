@@ -35,12 +35,12 @@ from requests.utils import requote_uri
 from six.moves.urllib.parse import urlparse
 from xbmcext import Dialog, getLocalizedString, getPath
 
-__all__ = ['SubtitleRequest', 'DramaListRequest', 'DramaDetailRequest', 'DramaDetailRequest', 'RecentlyDramaRequest',
+__all__ = ['SubtitleRequest', 'DramaListRequest', 'DramaDetailRequest', 'RecentlyDramaRequest',
            'SearchRequest', 'EpisodeListRequest', 'ServerListRequest', 'StarListRequest', 'StarDramaRequest']
 
 
 class Request():
-    domains = 'watchasian.cx', 'www1.dramacool.ee'
+    domains = ('www1.dramacool.cr', 'watchasian.la')
     session = Session()
     tempfile = join(getPath(), 'resources/data/tempfile')
 
