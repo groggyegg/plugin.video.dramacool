@@ -30,8 +30,6 @@ from peewee import CharField, Model, SmallIntegerField, SQL, SqliteDatabase, Tex
 from playhouse.sqlite_ext import DateTimeField
 from xbmcext import ListItem, getPath, getProfilePath
 
-__all__ = ['Drama', 'ExternalDatabase', 'InternalDatabase', 'RecentDrama', 'RecentFilter']
-
 
 class JSONField(CharField):
     def db_value(self, value):
@@ -143,7 +141,7 @@ class Drama(InternalModel, ListItem):
 
     def __init__(self, *args, **kwargs):
         super(Drama, self).__init__(*args, **kwargs)
-        self.setLabel(kwargs.pop('title'))
+        self.setLabel(kwargs['title'])
         self.setArt({'thumb': kwargs['poster'],
                      'poster': kwargs['poster'],
                      'banner': kwargs['poster'],
@@ -151,12 +149,7 @@ class Drama(InternalModel, ListItem):
                      'clearart': kwargs['poster'],
                      'landscape': kwargs['poster'],
                      'icon': kwargs['poster']} if 'poster' in kwargs else {})
-        self.setInfo('video', {'title': kwargs.pop('title') if 'title' in kwargs else None,
-                               'plot': kwargs.pop('plot') if 'plot' in kwargs else None,
-                               'country': kwargs.pop('country') if 'country' in kwargs else None,
-                               'status': kwargs.pop('status') if 'status' in kwargs else None,
-                               'genre': kwargs.pop('genre') if 'genre' in kwargs else None,
-                               'year': kwargs.pop('year') if 'year' in kwargs else None})
+        self.setInfo('video', {label: kwargs[label] for label in ('title', 'plot', 'country', 'status', 'genre', 'year') if label in kwargs})
 
 
 class RecentDrama(ExternalModel):
@@ -174,5 +167,13 @@ class RecentFilter(ExternalModel, ListItem):
 
     def __init__(self, *args, **kwargs):
         super(RecentFilter, self).__init__(*args, **kwargs)
-        self.setLabel(kwargs.pop('title'))
+        self.setLabel(kwargs['title'])
         self.setArt({'icon': 'DefaultTVShows.png'})
+
+
+if __name__ == '__main__':
+    try:
+        InternalDatabase.connect()
+        InternalDatabase.create()
+    finally:
+        InternalDatabase.close()
