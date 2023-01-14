@@ -40,7 +40,7 @@ plugin = Plugin()
 
 @plugin.route('/')
 def home():
-    plugin.setDirectoryItems([
+    plugin.addDirectoryItems([
         (plugin.getUrlFor('/search', type='movies'), ListItem(getLocalizedString(33000), iconImage='DefaultAddonsSearch.png'), True),
         (plugin.getUrlFor('/search', type='stars'), ListItem(getLocalizedString(33001), iconImage='DefaultAddonsSearch.png'), True),
         (plugin.getUrlFor('/recently-viewed'), ListItem(getLocalizedString(33002), iconImage='DefaultTags.png'), True),
@@ -54,6 +54,7 @@ def home():
         (plugin.getUrlFor('/most-popular-drama', page=1), ListItem(getLocalizedString(33009), iconImage='DefaultFavourites.png'), True),
         (plugin.getUrlFor('/list-star.html', page=1), ListItem(getLocalizedString(33010), iconImage='DefaultFavourites.png'), True)
     ])
+    plugin.endOfDirectory()
 
 
 @plugin.route('/search')
@@ -79,7 +80,8 @@ def search_type(type, keyword, page):
     if type == 'movies':
         plugin.setContent('tvshows')
 
-    plugin.setDirectoryItems(items)
+    plugin.addDirectoryItems(items)
+    plugin.endOfDirectory()
 
 
 @plugin.route('/recently-viewed')
@@ -96,7 +98,8 @@ def recently_viewed():
         items.append((plugin.getUrlFor(item.path), item, True))
 
     plugin.setContent('tvshows')
-    plugin.setDirectoryItems(items)
+    plugin.addDirectoryItems(items)
+    plugin.endOfDirectory()
 
 
 @plugin.route('/recently-filtered')
@@ -110,7 +113,8 @@ def recently_filtered():
         ])
         items.append((plugin.getUrlFor(recent_filter.path), recent_filter, True))
 
-    plugin.setDirectoryItems(items)
+    plugin.addDirectoryItems(items)
+    plugin.endOfDirectory()
 
 
 @plugin.route('/recently-viewed')
@@ -140,12 +144,13 @@ def recently_added(page):
 
     items.extend(iterate_pagination(pagination))
     plugin.setContent('episodes')
-    plugin.setDirectoryItems(items)
+    plugin.addDirectoryItems(items)
+    plugin.endOfDirectory()
 
 
 @plugin.route('/drama-list')
 def drama_category():
-    plugin.setDirectoryItems([
+    plugin.addDirectoryItems([
         (plugin.getUrlFor('/category/korean-drama', label=33200), ListItem(getLocalizedString(33200), iconImage='DefaultTVShows.png'), True),
         (plugin.getUrlFor('/category/japanese-drama', label=33201), ListItem(getLocalizedString(33201), iconImage='DefaultTVShows.png'), True),
         (plugin.getUrlFor('/category/taiwanese-drama', label=33202), ListItem(getLocalizedString(33202), iconImage='DefaultTVShows.png'), True),
@@ -155,11 +160,12 @@ def drama_category():
         (plugin.getUrlFor('/category/thailand-drama', label=33206), ListItem(getLocalizedString(33206), iconImage='DefaultTVShows.png'), True),
         (plugin.getUrlFor('/category/indian-drama', label=33207), ListItem(getLocalizedString(33207), iconImage='DefaultTVShows.png'), True)
     ])
+    plugin.endOfDirectory()
 
 
 @plugin.route('/drama-movie')
 def movie_category():
-    plugin.setDirectoryItems([
+    plugin.addDirectoryItems([
         (plugin.getUrlFor('/category/korean-movies', label=33300), ListItem(getLocalizedString(33300), iconImage='DefaultTVShows.png'), True),
         (plugin.getUrlFor('/category/japanese-movies', label=33301), ListItem(getLocalizedString(33301), iconImage='DefaultTVShows.png'), True),
         (plugin.getUrlFor('/category/taiwanese-movies', label=33302), ListItem(getLocalizedString(33302), iconImage='DefaultTVShows.png'), True),
@@ -170,6 +176,7 @@ def movie_category():
         (plugin.getUrlFor('/category/thailand-movies', label=33307), ListItem(getLocalizedString(33307), iconImage='DefaultTVShows.png'), True),
         (plugin.getUrlFor('/category/indian-movies', label=33308), ListItem(getLocalizedString(33308), iconImage='DefaultTVShows.png'), True)
     ])
+    plugin.endOfDirectory()
 
 
 @plugin.route('/category/{}')
@@ -220,9 +227,10 @@ def drama_list(label, characters=[], genres=[], statuses=[], years=[]):
     for item in Drama.select().where(expression):
         items.append((plugin.getUrlFor(item.path), item, True))
 
-    plugin.addSortMethods([SORT_METHOD_TITLE, SORT_METHOD_VIDEO_YEAR])
+    plugin.addSortMethods(SORT_METHOD_TITLE, SORT_METHOD_VIDEO_YEAR)
     plugin.setContent('tvshows')
-    plugin.setDirectoryItems(items)
+    plugin.addDirectoryItems(items)
+    plugin.endOfDirectory()
 
 
 @plugin.route('/most-popular-drama')
@@ -237,7 +245,8 @@ def most_popular_drama(page):
 
     items.extend(iterate_pagination(pagination))
     plugin.setContent('tvshows')
-    plugin.setDirectoryItems(items)
+    plugin.addDirectoryItems(items)
+    plugin.endOfDirectory()
 
 
 @plugin.route('/list-star.html')
@@ -250,7 +259,8 @@ def star_list(page):
         items.append((plugin.getUrlFor(path), item, True))
 
     items.extend(iterate_pagination(pagination))
-    plugin.setDirectoryItems(items)
+    plugin.addDirectoryItems(items)
+    plugin.endOfDirectory()
 
 
 @plugin.route('/star/{}')
@@ -262,9 +272,10 @@ def star_drama():
         item = Drama.get_or_none(Drama.path == path)
         items.append((plugin.getUrlFor(path), item if item else Drama(title=title, poster=poster), True))
 
-    plugin.addSortMethods([SORT_METHOD_TITLE, SORT_METHOD_VIDEO_YEAR])
+    plugin.addSortMethods(SORT_METHOD_TITLE, SORT_METHOD_VIDEO_YEAR)
     plugin.setContent('tvshows')
-    plugin.setDirectoryItems(items)
+    plugin.addDirectoryItems(items)
+    plugin.endOfDirectory()
 
 
 @plugin.route('/drama-detail/{}')
@@ -277,7 +288,8 @@ def episode_list():
         items.append((plugin.getUrlFor(path), item, False))
 
     plugin.setContent('episodes')
-    plugin.setDirectoryItems(items)
+    plugin.addDirectoryItems(items)
+    plugin.endOfDirectory()
 
 
 @plugin.route('/{:re("[^.]+.html")}')

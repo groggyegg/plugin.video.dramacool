@@ -3,7 +3,6 @@
     <requires>
         <import addon="script.module.beautifulsoup4"/>
         <import addon="script.module.peewee"/>
-        <import addon="script.module.pymaybe"/>
         <import addon="script.module.requests"/>
         <import addon="script.module.resolveurl"/>
         <import addon="script.module.six"/>

@@ -22,13 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from json import loads, dumps
-from os import makedirs, remove
-from os.path import exists, join
+from json import dumps, loads
+from os import makedirs, path
 
-from peewee import CharField, Model, SmallIntegerField, SQL, SqliteDatabase, TextField
+from peewee import CharField, Model, SmallIntegerField, SQL, SqliteDatabase
 from playhouse.sqlite_ext import DateTimeField
-from xbmcext import ListItem, getPath, getProfilePath
+from xbmcext import ListItem, getAddonPath, getAddonProfilePath
 
 
 class JSONField(CharField):
@@ -43,62 +42,45 @@ class JSONField(CharField):
 
 
 class ExternalDatabase(object):
-    profile = getProfilePath()
-    connection = SqliteDatabase(join(profile, 'dramacool.db'))
+    connection = None
 
-    @staticmethod
-    def close():
-        ExternalDatabase.connection.close()
+    @classmethod
+    def close(cls):
+        cls.connection.close()
 
-    @staticmethod
-    def connect():
-        if not exists(ExternalDatabase.profile):
-            makedirs(ExternalDatabase.profile)
+    @classmethod
+    def connect(cls):
+        profile = getAddonProfilePath()
 
-        ExternalDatabase.connection.connect(True)
+        if not path.exists(profile):
+            makedirs(profile)
 
-    @staticmethod
-    def create():
-        ExternalDatabase.connection.create_tables([RecentDrama, RecentFilter])
-        ExternalDatabase.migration_20211114()
-        ExternalDatabase.connection.commit()
+        cls.connection = SqliteDatabase(path.join(profile, 'dramacool.db'))
+        cls.connection.connect(True)
 
-    @staticmethod
-    def migration_20211114():
-        connection = SqliteDatabase(join(ExternalDatabase.profile, 'recently_viewed.db'))
-
-        if exists(connection.database):
-            class RecentlyViewed(Model):
-                path = TextField(primary_key=True, constraints=[SQL('ON CONFLICT REPLACE')])
-                last_visited = DateTimeField(constraints=[SQL('DEFAULT CURRENT_TIMESTAMP')])
-
-                class Meta:
-                    database = connection
-                    table_name = 'recently_viewed'
-
-            for recently_viewed in RecentlyViewed.select():
-                RecentDrama.create(path=recently_viewed.path, timestamp=recently_viewed.last_visited)
-
-            connection.close()
-            remove(connection.database)
+    @classmethod
+    def create(cls):
+        cls.connection.create_tables([RecentDrama, RecentFilter])
+        cls.connection.commit()
 
 
 class InternalDatabase(object):
-    connection = SqliteDatabase(join(getPath(), 'resources/data/dramacool.db'))
+    connection = None
 
-    @staticmethod
-    def close():
-        InternalDatabase.connection.close()
+    @classmethod
+    def close(cls):
+        cls.connection.close()
 
-    @staticmethod
-    def connect():
-        InternalDatabase.connection.connect(True)
+    @classmethod
+    def connect(cls):
+        cls.connection = SqliteDatabase(path.join(getAddonPath(), 'resources/data/dramacool.db'))
+        cls.connection.connect(True)
 
-    @staticmethod
-    def create():
+    @classmethod
+    def create(cls):
         from request import DramaDetailRequest, DramaListRequest
 
-        InternalDatabase.connection.create_tables([Drama])
+        cls.connection.create_tables([Drama])
 
         paths = {drama.path for drama in Drama.select().where((Drama.status == 'Completed') & Drama.mediatype.is_null(False))}
         mediatypes = ['/category/korean-movies', '/category/japanese-movies', '/category/taiwanese-movies', '/category/hong-kong-movies',
@@ -112,7 +94,7 @@ class InternalDatabase(object):
                 if path not in paths:
                     Drama.create(mediatype=mediatype, **DramaDetailRequest().get(path))
 
-        InternalDatabase.connection.commit()
+        cls.connection.commit()
 
 
 class ExternalModel(Model):

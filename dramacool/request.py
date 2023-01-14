@@ -23,7 +23,7 @@ SOFTWARE.
 """
 
 from abc import abstractmethod
-from os.path import join
+from os import path
 from re import compile, search
 
 from bs4 import BeautifulSoup
@@ -32,7 +32,7 @@ from pymaybe import maybe
 from requests import Session
 from requests.utils import requote_uri
 from six.moves.urllib.parse import urlparse
-from xbmcext import Dialog, getLocalizedString, getPath
+from xbmcext import Dialog, getLocalizedString, getAddonPath
 
 __all__ = ['SubtitleRequest', 'DramaListRequest', 'DramaDetailRequest', 'DramaDetailRequest', 'RecentlyDramaRequest',
            'SearchRequest', 'EpisodeListRequest', 'ServerListRequest', 'StarListRequest', 'StarDramaRequest']
@@ -41,7 +41,7 @@ __all__ = ['SubtitleRequest', 'DramaListRequest', 'DramaDetailRequest', 'DramaDe
 class Request(object):
     domains = 'watchasian.cx', 'www1.dramacool.ee'
     session = Session()
-    tempfile = join(getPath(), 'resources/data/tempfile')
+    tempfile = path.join(getAddonPath(), 'resources/data/tempfile')
 
     def get(self, path):
         for domain in self.domains:
