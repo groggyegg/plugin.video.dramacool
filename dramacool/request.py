@@ -28,27 +28,30 @@ from re import compile, search
 
 from bs4 import BeautifulSoup
 from bs4.element import SoupStrainer, NavigableString
-from pymaybe import maybe
-from requests import Session
-from requests.utils import requote_uri
+from requests import Session, exceptions, utils
 from six.moves.urllib.parse import urlparse
 from xbmcext import Dialog, getLocalizedString, getAddonPath
+
+from pymaybe import maybe
 
 __all__ = ['SubtitleRequest', 'DramaListRequest', 'DramaDetailRequest', 'DramaDetailRequest', 'RecentlyDramaRequest',
            'SearchRequest', 'EpisodeListRequest', 'ServerListRequest', 'StarListRequest', 'StarDramaRequest']
 
 
 class Request(object):
-    domains = 'watchasian.cx', 'www1.dramacool.ee'
+    domains = 'watchasian.la', 'www1.dramacool.cr'
     session = Session()
     tempfile = path.join(getAddonPath(), 'resources/data/tempfile')
 
     def get(self, path):
         for domain in self.domains:
-            response = self.session.get('https://{}{}'.format(domain, path), verify=False)
+            try:
+                response = self.session.get('https://{}{}'.format(domain, path))
 
-            if response.status_code == 200:
-                return self.parse(response.text, path)
+                if response.status_code == 200:
+                    return self.parse(response.text, path)
+            except exceptions.SSLError:
+                pass
 
         raise ConnectionError(getLocalizedString(33504))
 
@@ -98,7 +101,7 @@ class DramaDetailRequest(Request):
         status = maybe(soup.find('a', {'href': compile('^/popular-')})).text.or_none()
         year = maybe(soup.find('a', {'href': compile('^/released-in-')})).text.or_none()
         genre = [a.text for a in soup.find_all('a', {'href': compile('^/genre/')})]
-        return {'path': path, 'poster': requote_uri(poster) if poster else poster, 'title': title, 'plot': plot,
+        return {'path': path, 'poster': utils.requote_uri(poster) if poster else poster, 'title': title, 'plot': plot,
                 'country': country, 'status': status, 'year': None if year == '0' else year, 'genre': genre}
 
     @staticmethod
@@ -115,7 +118,7 @@ class RecentlyDramaRequest(Request):
     @staticmethod
     def episodes(tag):
         return [(a.attrs['href'],
-                 requote_uri(a.find('img').attrs['data-original']),
+                 utils.requote_uri(a.find('img').attrs['data-original']),
                  a.find('span', {'class': 'time'}).text,
                  "[{}] {} {}".format(a.find('span', {'class': 'type'}).text,
                                      a.find('h3').text,
@@ -130,7 +133,7 @@ class RecentlyDramaRequest(Request):
 class SearchRequest(RecentlyDramaRequest):
     @staticmethod
     def episodes(tag):
-        return [(a.attrs['href'], a.find('h3').text, requote_uri(a.find('img').attrs['data-original'])) for a in maybe(tag).find_all('a').or_else([])]
+        return [(a.attrs['href'], a.find('h3').text, utils.requote_uri(a.find('img').attrs['data-original'])) for a in maybe(tag).find_all('a').or_else([])]
 
 
 class EpisodeListRequest(Request):
@@ -152,11 +155,11 @@ class StarListRequest(RecentlyDramaRequest):
     def episodes(tag):
         return [(li.find_next('a').attrs['href'],
                  li.find_next('a', {'class': False}).text,
-                 requote_uri(li.find_next('img').attrs['data-original']),
+                 utils.requote_uri(li.find_next('img').attrs['data-original']),
                  li.find_next('ul').text.strip()) for li in tag.find_all('li', recursive=False)]
 
 
 class StarDramaRequest(Request):
     def parse(self, text, path):
         soup = BeautifulSoup(text, 'html.parser', parse_only=SoupStrainer('ul', {'class': 'list-episode-item'}))
-        return [(a.attrs['href'], a.find_next('h3').text, requote_uri(a.find_next('img').attrs['data-original'])) for a in soup.find_all('a')]
+        return [(a.attrs['href'], a.find_next('h3').text, utils.requote_uri(a.find_next('img').attrs['data-original'])) for a in soup.find_all('a')]

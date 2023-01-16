@@ -29,6 +29,9 @@ from peewee import CharField, Model, SmallIntegerField, SQL, SqliteDatabase
 from playhouse.sqlite_ext import DateTimeField
 from xbmcext import ListItem, getAddonPath, getAddonProfilePath
 
+if __name__ == '__main__':
+    from xbmcgui import ListItem
+
 
 class JSONField(CharField):
     def db_value(self, value):
@@ -42,7 +45,8 @@ class JSONField(CharField):
 
 
 class ExternalDatabase(object):
-    connection = None
+    profile_path = getAddonProfilePath()
+    connection = SqliteDatabase(path.join(profile_path, 'dramacool.db'))
 
     @classmethod
     def close(cls):
@@ -50,12 +54,9 @@ class ExternalDatabase(object):
 
     @classmethod
     def connect(cls):
-        profile = getAddonProfilePath()
+        if not path.exists(cls.profile_path):
+            makedirs(cls.profile_path)
 
-        if not path.exists(profile):
-            makedirs(profile)
-
-        cls.connection = SqliteDatabase(path.join(profile, 'dramacool.db'))
         cls.connection.connect(True)
 
     @classmethod
@@ -65,15 +66,16 @@ class ExternalDatabase(object):
 
 
 class InternalDatabase(object):
-    connection = None
+    addon_path = getAddonPath()
+    connection = SqliteDatabase(path.join(addon_path if addon_path else '..', 'resources/data/dramacool.db'))
 
     @classmethod
     def close(cls):
-        cls.connection.close()
+        if cls.connection:
+            cls.connection.close()
 
     @classmethod
     def connect(cls):
-        cls.connection = SqliteDatabase(path.join(getAddonPath(), 'resources/data/dramacool.db'))
         cls.connection.connect(True)
 
     @classmethod
@@ -90,9 +92,9 @@ class InternalDatabase(object):
                       '/category/thailand-drama', '/category/indian-drama', '/kshow']
 
         for mediatype in mediatypes:
-            for path in DramaListRequest().get(mediatype):
-                if path not in paths:
-                    Drama.create(mediatype=mediatype, **DramaDetailRequest().get(path))
+            for path_ in DramaListRequest().get(mediatype):
+                if path_ not in paths:
+                    Drama.create(mediatype=mediatype, **DramaDetailRequest().get(path_))
 
         cls.connection.commit()
 

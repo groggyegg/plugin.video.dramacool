@@ -28,12 +28,11 @@ from operator import or_
 
 from resolveurl import resolve, scrape_supported
 from resolveurl.resolver import ResolverError
-from xbmc import Keyboard, executebuiltin, sleep
-from xbmcext import Dialog, ListItem, Plugin, getLocalizedString
-from xbmcplugin import SORT_METHOD_TITLE, SORT_METHOD_VIDEO_YEAR
+from xbmcext import Dialog, Keyboard, ListItem, Plugin, SortMethod, executebuiltin, getLocalizedString, sleep
 
 from database import Drama, ExternalDatabase, InternalDatabase, RecentDrama, RecentFilter
-from request import RecentlyDramaRequest, SearchRequest, StarListRequest, StarDramaRequest, DramaDetailRequest, EpisodeListRequest, ServerListRequest, SubtitleRequest
+from request import RecentlyDramaRequest, SearchRequest, StarListRequest, StarDramaRequest, DramaDetailRequest, EpisodeListRequest, ServerListRequest, \
+    SubtitleRequest
 
 plugin = Plugin()
 
@@ -227,7 +226,7 @@ def drama_list(label, characters=[], genres=[], statuses=[], years=[]):
     for item in Drama.select().where(expression):
         items.append((plugin.getUrlFor(item.path), item, True))
 
-    plugin.addSortMethods(SORT_METHOD_TITLE, SORT_METHOD_VIDEO_YEAR)
+    plugin.addSortMethods(SortMethod.TITLE, SortMethod.VIDEO_YEAR)
     plugin.setContent('tvshows')
     plugin.addDirectoryItems(items)
     plugin.endOfDirectory()
@@ -272,7 +271,7 @@ def star_drama():
         item = Drama.get_or_none(Drama.path == path)
         items.append((plugin.getUrlFor(path), item if item else Drama(title=title, poster=poster), True))
 
-    plugin.addSortMethods(SORT_METHOD_TITLE, SORT_METHOD_VIDEO_YEAR)
+    plugin.addSortMethods(SortMethod.TITLE, SortMethod.VIDEO_YEAR)
     plugin.setContent('tvshows')
     plugin.addDirectoryItems(items)
     plugin.endOfDirectory()
@@ -323,7 +322,10 @@ def resolve_episode():
 
 
 def iterate_pagination(pagination):
-    localization_code = {'<< First': 33600, '< Previous': 33601, 'Next >': 33602, 'Last >>': 33603}
+    localization_code = {'<< First': getLocalizedString(33600),
+                         '< Previous': getLocalizedString(33601),
+                         'Next >': getLocalizedString(33602),
+                         'Last >>': getLocalizedString(33603)}
 
     for path, title in pagination:
         item = ListItem(localization_code[title], iconImage='DefaultFolderBack.png' if '<' in title else '')
