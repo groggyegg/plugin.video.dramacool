@@ -31,8 +31,8 @@ from resolveurl.resolver import ResolverError
 from xbmcext import Dialog, Keyboard, ListItem, Plugin, SortMethod, executebuiltin, getLocalizedString, sleep
 
 from database import Drama, ExternalDatabase, InternalDatabase, RecentDrama, RecentFilter
-from request import RecentlyDramaRequest, SearchRequest, StarListRequest, StarDramaRequest, DramaDetailRequest, EpisodeListRequest, ServerListRequest, \
-    SubtitleRequest
+from request import (RecentlyDramaRequest, SearchRequest, StarListRequest, StarDramaRequest,
+                     DramaDetailRequest, EpisodeListRequest, ServerListRequest, SubtitleRequest)
 
 plugin = Plugin()
 

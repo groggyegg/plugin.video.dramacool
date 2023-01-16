@@ -98,6 +98,21 @@ class InternalDatabase(object):
 
         cls.connection.commit()
 
+    @classmethod
+    def update_title_year(cls):
+        from re import match
+
+        for drama in Drama.select().where(Drama.status == 'Completed'):
+            found_match = match(r'^(.+)\((\d{4})\)$', drama.title)
+
+            if found_match:
+                title, year = found_match.groups()
+                drama.title = title.strip()
+                drama.year = int(year)
+                drama.save()
+
+        cls.connection.commit()
+
 
 class ExternalModel(Model):
     class Meta:
