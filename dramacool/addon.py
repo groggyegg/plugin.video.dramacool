@@ -137,7 +137,8 @@ def recently_added(page):
 
     for path, poster, dateadded, title in episodes:
         item = Drama.select().where(Drama.poster == poster).get_or_none()
-        item = Drama(title=title, poster=poster, dateadded=dateadded, **({'plot': item.plot} if item else {}))
+        plot = item.plot if item else None
+        item = Drama(title=title, poster=poster, plot=plot)
         item.setProperty('IsPlayable', 'true')
         items.append((plugin.getUrlFor(path), item, False))
 

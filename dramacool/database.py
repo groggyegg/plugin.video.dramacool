@@ -103,7 +103,7 @@ class InternalDatabase(object):
         from re import match
 
         for drama in Drama.select().where(Drama.status == 'Completed'):
-            found_match = match(r'^(.+)\((\d{4})\)$', drama.title)
+            found_match = match(r'^(.+)\((\d{4})\)$', drama.title) or match(r'^(.+)\(JP (\d{4})\)$', drama.title)
 
             if found_match:
                 title, year = found_match.groups()
@@ -148,7 +148,7 @@ class Drama(InternalModel, ListItem):
                      'clearart': kwargs['poster'],
                      'landscape': kwargs['poster'],
                      'icon': kwargs['poster']} if 'poster' in kwargs else {})
-        self.setInfo('video', {label: kwargs[label] for label in ('title', 'plot', 'country', 'status', 'genre', 'year') if label in kwargs})
+        self.setInfo('video', {label: kwargs[label] for label in ('title', 'plot', 'country', 'status', 'genre', 'year') if kwargs.get(label)})
 
 
 class RecentDrama(ExternalModel):
