@@ -40,18 +40,18 @@ plugin = Plugin()
 @plugin.route('/')
 def home():
     plugin.addDirectoryItems([
-        (plugin.getUrlFor('/search', type='movies'), ListItem(getLocalizedString(33000), iconImage='DefaultAddonsSearch.png'), True),
-        (plugin.getUrlFor('/search', type='stars'), ListItem(getLocalizedString(33001), iconImage='DefaultAddonsSearch.png'), True),
-        (plugin.getUrlFor('/recently-viewed'), ListItem(getLocalizedString(33002), iconImage='DefaultTags.png'), True),
-        (plugin.getUrlFor('/recently-filtered'), ListItem(getLocalizedString(33011), iconImage='DefaultTags.png'), True),
-        (plugin.getUrlFor('/recently-added', page=1), ListItem(getLocalizedString(33003), iconImage='DefaultRecentlyAddedEpisodes.png'), True),
-        (plugin.getUrlFor('/recently-added-movie', page=1), ListItem(getLocalizedString(33004), iconImage='DefaultRecentlyAddedEpisodes.png'), True),
-        (plugin.getUrlFor('/recently-added-kshow', page=1), ListItem(getLocalizedString(33005), iconImage='DefaultRecentlyAddedEpisodes.png'), True),
-        (plugin.getUrlFor('/drama-list'), ListItem(getLocalizedString(33006), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/drama-movie'), ListItem(getLocalizedString(33007), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/kshow', label=33008), ListItem(getLocalizedString(33008), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/most-popular-drama', page=1), ListItem(getLocalizedString(33009), iconImage='DefaultFavourites.png'), True),
-        (plugin.getUrlFor('/list-star.html', page=1), ListItem(getLocalizedString(33010), iconImage='DefaultFavourites.png'), True)
+        (plugin.getSerializedUrlFor('/search', type='movies'), ListItem(getLocalizedString(33000), iconImage='DefaultAddonsSearch.png'), True),
+        (plugin.getSerializedUrlFor('/search', type='stars'), ListItem(getLocalizedString(33001), iconImage='DefaultAddonsSearch.png'), True),
+        (plugin.getSerializedUrlFor('/recently-viewed'), ListItem(getLocalizedString(33002), iconImage='DefaultTags.png'), True),
+        (plugin.getSerializedUrlFor('/recently-filtered'), ListItem(getLocalizedString(33011), iconImage='DefaultTags.png'), True),
+        (plugin.getSerializedUrlFor('/recently-added', page=1), ListItem(getLocalizedString(33003), iconImage='DefaultRecentlyAddedEpisodes.png'), True),
+        (plugin.getSerializedUrlFor('/recently-added-movie', page=1), ListItem(getLocalizedString(33004), iconImage='DefaultRecentlyAddedEpisodes.png'), True),
+        (plugin.getSerializedUrlFor('/recently-added-kshow', page=1), ListItem(getLocalizedString(33005), iconImage='DefaultRecentlyAddedEpisodes.png'), True),
+        (plugin.getSerializedUrlFor('/drama-list'), ListItem(getLocalizedString(33006), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/drama-movie'), ListItem(getLocalizedString(33007), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/kshow', label=33008), ListItem(getLocalizedString(33008), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/most-popular-drama', page=1), ListItem(getLocalizedString(33009), iconImage='DefaultFavourites.png'), True),
+        (plugin.getSerializedUrlFor('/list-star.html', page=1), ListItem(getLocalizedString(33010), iconImage='DefaultFavourites.png'), True)
     ])
     plugin.endOfDirectory()
 
@@ -72,7 +72,7 @@ def search_type(type, keyword, page):
 
     for path, title, poster in dramas:
         item = Drama.get_or_none(Drama.path == path) if type == 'movies' else Drama(title=title, poster=poster)
-        items.append((plugin.getUrlFor(path), item if item else Drama.create(**DramaDetailRequest().get(path)), True))
+        items.append((plugin.getSerializedUrlFor(path), item if item else Drama.create(**DramaDetailRequest().get(path)), True))
 
     items.extend(iterate_pagination(pagination))
 
@@ -91,10 +91,10 @@ def recently_viewed():
         item = Drama.get_or_none(Drama.path == recent_drama.path)
         item = item if item else Drama.create(**DramaDetailRequest().get(recent_drama.path))
         item.addContextMenuItems([
-            (getLocalizedString(33100), 'RunPlugin({})'.format(plugin.getUrlFor('/recently-viewed', delete=item.path))),
-            (getLocalizedString(33101), 'RunPlugin({})'.format(plugin.getUrlFor('/recently-viewed', delete='%')))
+            (getLocalizedString(33100), 'RunPlugin({})'.format(plugin.getSerializedUrlFor('/recently-viewed', delete=item.path))),
+            (getLocalizedString(33101), 'RunPlugin({})'.format(plugin.getSerializedUrlFor('/recently-viewed', delete='%')))
         ])
-        items.append((plugin.getUrlFor(item.path), item, True))
+        items.append((plugin.getSerializedUrlFor(item.path), item, True))
 
     plugin.setContent('tvshows')
     plugin.addDirectoryItems(items)
@@ -107,10 +107,10 @@ def recently_filtered():
 
     for recent_filter in RecentFilter.select(RecentFilter.path, RecentFilter.title).order_by(RecentFilter.timestamp.desc()):
         recent_filter.addContextMenuItems([
-            (getLocalizedString(33100), 'RunPlugin({})'.format(plugin.getUrlFor('/recently-filtered', delete=recent_filter.path))),
-            (getLocalizedString(33101), 'RunPlugin({})'.format(plugin.getUrlFor('/recently-filtered', delete='%')))
+            (getLocalizedString(33100), 'RunPlugin({})'.format(plugin.getSerializedUrlFor('/recently-filtered', delete=recent_filter.path))),
+            (getLocalizedString(33101), 'RunPlugin({})'.format(plugin.getSerializedUrlFor('/recently-filtered', delete='%')))
         ])
-        items.append((plugin.getUrlFor(recent_filter.path), recent_filter, True))
+        items.append((plugin.getSerializedUrlFor(recent_filter.path), recent_filter, True))
 
     plugin.addDirectoryItems(items)
     plugin.endOfDirectory()
@@ -140,7 +140,7 @@ def recently_added(page):
         plot = item.plot if item else None
         item = Drama(title=title, poster=poster, plot=plot)
         item.setProperty('IsPlayable', 'true')
-        items.append((plugin.getUrlFor(path), item, False))
+        items.append((plugin.getSerializedUrlFor(path), item, False))
 
     items.extend(iterate_pagination(pagination))
     plugin.setContent('episodes')
@@ -151,14 +151,14 @@ def recently_added(page):
 @plugin.route('/drama-list')
 def drama_category():
     plugin.addDirectoryItems([
-        (plugin.getUrlFor('/category/korean-drama', label=33200), ListItem(getLocalizedString(33200), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/category/japanese-drama', label=33201), ListItem(getLocalizedString(33201), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/category/taiwanese-drama', label=33202), ListItem(getLocalizedString(33202), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/category/hong-kong-drama', label=33203), ListItem(getLocalizedString(33203), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/category/chinese-drama', label=33204), ListItem(getLocalizedString(33204), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/category/other-asia-drama', label=33205), ListItem(getLocalizedString(33205), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/category/thailand-drama', label=33206), ListItem(getLocalizedString(33206), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/category/indian-drama', label=33207), ListItem(getLocalizedString(33207), iconImage='DefaultTVShows.png'), True)
+        (plugin.getSerializedUrlFor('/category/korean-drama', label=33200), ListItem(getLocalizedString(33200), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/category/japanese-drama', label=33201), ListItem(getLocalizedString(33201), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/category/taiwanese-drama', label=33202), ListItem(getLocalizedString(33202), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/category/hong-kong-drama', label=33203), ListItem(getLocalizedString(33203), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/category/chinese-drama', label=33204), ListItem(getLocalizedString(33204), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/category/other-asia-drama', label=33205), ListItem(getLocalizedString(33205), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/category/thailand-drama', label=33206), ListItem(getLocalizedString(33206), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/category/indian-drama', label=33207), ListItem(getLocalizedString(33207), iconImage='DefaultTVShows.png'), True)
     ])
     plugin.endOfDirectory()
 
@@ -166,15 +166,15 @@ def drama_category():
 @plugin.route('/drama-movie')
 def movie_category():
     plugin.addDirectoryItems([
-        (plugin.getUrlFor('/category/korean-movies', label=33300), ListItem(getLocalizedString(33300), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/category/japanese-movies', label=33301), ListItem(getLocalizedString(33301), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/category/taiwanese-movies', label=33302), ListItem(getLocalizedString(33302), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/category/hong-kong-movies', label=33303), ListItem(getLocalizedString(33303), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/category/chinese-movies', label=33304), ListItem(getLocalizedString(33304), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/category/american-movies', label=33305), ListItem(getLocalizedString(33305), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/category/other-asia-movies', label=33306), ListItem(getLocalizedString(33306), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/category/thailand-movies', label=33307), ListItem(getLocalizedString(33307), iconImage='DefaultTVShows.png'), True),
-        (plugin.getUrlFor('/category/indian-movies', label=33308), ListItem(getLocalizedString(33308), iconImage='DefaultTVShows.png'), True)
+        (plugin.getSerializedUrlFor('/category/korean-movies', label=33300), ListItem(getLocalizedString(33300), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/category/japanese-movies', label=33301), ListItem(getLocalizedString(33301), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/category/taiwanese-movies', label=33302), ListItem(getLocalizedString(33302), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/category/hong-kong-movies', label=33303), ListItem(getLocalizedString(33303), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/category/chinese-movies', label=33304), ListItem(getLocalizedString(33304), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/category/american-movies', label=33305), ListItem(getLocalizedString(33305), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/category/other-asia-movies', label=33306), ListItem(getLocalizedString(33306), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/category/thailand-movies', label=33307), ListItem(getLocalizedString(33307), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/category/indian-movies', label=33308), ListItem(getLocalizedString(33308), iconImage='DefaultTVShows.png'), True)
     ])
     plugin.endOfDirectory()
 
@@ -225,7 +225,7 @@ def drama_list(label, characters=[], genres=[], statuses=[], years=[]):
     items = []
 
     for item in Drama.select().where(expression):
-        items.append((plugin.getUrlFor(item.path), item, True))
+        items.append((plugin.getSerializedUrlFor(item.path), item, True))
 
     plugin.addSortMethods(SortMethod.TITLE, SortMethod.VIDEO_YEAR)
     plugin.setContent('tvshows')
@@ -241,7 +241,7 @@ def most_popular_drama(page):
     for path, title, poster in dramas:
         item = Drama.get_or_none(Drama.path == path)
         item = item if item else Drama(title=title, poster=poster)
-        items.append((plugin.getUrlFor(path), item, True))
+        items.append((plugin.getSerializedUrlFor(path), item, True))
 
     items.extend(iterate_pagination(pagination))
     plugin.setContent('tvshows')
@@ -256,7 +256,7 @@ def star_list(page):
 
     for path, title, poster, plot in stars:
         item = Drama(title=title, poster=poster, plot=plot)
-        items.append((plugin.getUrlFor(path), item, True))
+        items.append((plugin.getSerializedUrlFor(path), item, True))
 
     items.extend(iterate_pagination(pagination))
     plugin.addDirectoryItems(items)
@@ -270,7 +270,7 @@ def star_drama():
 
     for path, title, poster in dramas:
         item = Drama.get_or_none(Drama.path == path)
-        items.append((plugin.getUrlFor(path), item if item else Drama(title=title, poster=poster), True))
+        items.append((plugin.getSerializedUrlFor(path), item if item else Drama(title=title, poster=poster), True))
 
     plugin.addSortMethods(SortMethod.TITLE, SortMethod.VIDEO_YEAR)
     plugin.setContent('tvshows')
@@ -285,7 +285,7 @@ def episode_list():
     for path, title in EpisodeListRequest().get(plugin.getFullPath()):
         item = Drama(title=title)
         item.setProperty('IsPlayable', 'true')
-        items.append((plugin.getUrlFor(path), item, False))
+        items.append((plugin.getSerializedUrlFor(path), item, False))
 
     plugin.setContent('episodes')
     plugin.addDirectoryItems(items)
@@ -331,7 +331,7 @@ def iterate_pagination(pagination):
     for path, title in pagination:
         item = ListItem(localization_code[title], iconImage='DefaultFolderBack.png' if '<' in title else '')
         item.setProperty('SpecialSort', 'bottom')
-        yield plugin.getUrlFor(path), item, True
+        yield plugin.getSerializedUrlFor(path), item, True
 
 
 if __name__ == '__main__':
