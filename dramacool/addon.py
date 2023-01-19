@@ -93,7 +93,7 @@ def recently_viewed():
             (getLocalizedString(33100), 'RunPlugin({})'.format(plugin.getSerializedUrlFor('/recently-viewed', delete=item.path))),
             (getLocalizedString(33101), 'RunPlugin({})'.format(plugin.getSerializedUrlFor('/recently-viewed', delete='%')))
         ])
-        items.append((plugin.getSerializedUrlFor(item.path), item, True))
+        items.append((plugin.getUrlFor(item.path), item, True))
 
     plugin.setContent('tvshows')
     plugin.addDirectoryItems(items)
@@ -109,7 +109,7 @@ def recently_filtered():
             (getLocalizedString(33100), 'RunPlugin({})'.format(plugin.getSerializedUrlFor('/recently-filtered', delete=recent_filter.path))),
             (getLocalizedString(33101), 'RunPlugin({})'.format(plugin.getSerializedUrlFor('/recently-filtered', delete='%')))
         ])
-        items.append((plugin.getSerializedUrlFor(recent_filter.path), recent_filter, True))
+        items.append((plugin.getUrlFor(recent_filter.path), recent_filter, True))
 
     plugin.addDirectoryItems(items)
     plugin.endOfDirectory()
@@ -187,8 +187,8 @@ def drama_filter(label):
         getLocalizedString(33402): ['Action', 'Adventure', 'Comedy', 'Crime', 'Drama',
                                     'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-fi', 'Thriller'],
         getLocalizedString(33403): ['Ongoing', 'Completed', 'Upcoming'],
-        getLocalizedString(33404): ['2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010',
-                                    '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023']})
+        getLocalizedString(33404): ['2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011',
+                                    '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023']})
 
     if items:
         for item in items.values():
@@ -220,7 +220,7 @@ def drama_list(label, characters=[], genres=[], statuses=[], years=[]):
         title.append('Year: ' + dumps(years))
         expression &= Drama.year << years
 
-    RecentFilter.create(path=plugin.getFullPath(), title=' '.join(title))
+    RecentFilter.create(path=plugin.getSerializedFullPath(), title=' '.join(title))
     items = []
 
     for item in Drama.select().where(expression):
