@@ -26,8 +26,7 @@ from functools import reduce
 from json import dumps
 from operator import or_
 
-from resolveurl import resolve, scrape_supported
-from resolveurl.resolver import ResolverError
+from resolveurl import resolve, resolver, scrape_supported
 from xbmcext import Dialog, Keyboard, ListItem, Plugin, SortMethod, executebuiltin, getLocalizedString, sleep
 
 from database import Drama, ExternalDatabase, InternalDatabase, RecentDrama, RecentFilter
@@ -340,7 +339,7 @@ if __name__ == '__main__':
         ExternalDatabase.create()
         InternalDatabase.connect()
         plugin()
-    except (ConnectionError, ResolverError) as e:
+    except (ConnectionError, resolver.ResolverError) as e:
         Dialog().notification(str(e), '')
     finally:
         ExternalDatabase.close()
