@@ -30,8 +30,8 @@ from resolveurl import resolve, resolver, scrape_supported
 from xbmcext import Dialog, Keyboard, ListItem, Plugin, SortMethod, executebuiltin, getLocalizedString, sleep
 
 from database import Drama, ExternalDatabase, InternalDatabase, RecentDrama, RecentFilter
-from request import (RecentlyDramaRequest, SearchRequest, StarListRequest, StarDramaRequest,
-                     DramaDetailRequest, EpisodeListRequest, ServerListRequest, SubtitleRequest)
+from request import (ConnectionError, DramaDetailRequest, EpisodeListRequest, RecentlyDramaRequest,
+                     SearchRequest, ServerListRequest, StarDramaRequest, StarListRequest, SubtitleRequest)
 
 plugin = Plugin()
 
@@ -150,7 +150,7 @@ def recently_added(page):
 @plugin.route('/drama-list')
 def drama_category():
     plugin.addDirectoryItems([
-        (plugin.getSerializedUrlFor('/category/korean-drama', label=33200), ListItem(getLocalizedString(33200), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/category/korean-drama', label=33200), ListItem(getLocalizedString(33200), iconImage='DefaultTVShows.png', offscreen=False), True),
         (plugin.getSerializedUrlFor('/category/japanese-drama', label=33201), ListItem(getLocalizedString(33201), iconImage='DefaultTVShows.png'), True),
         (plugin.getSerializedUrlFor('/category/taiwanese-drama', label=33202), ListItem(getLocalizedString(33202), iconImage='DefaultTVShows.png'), True),
         (plugin.getSerializedUrlFor('/category/hong-kong-drama', label=33203), ListItem(getLocalizedString(33203), iconImage='DefaultTVShows.png'), True),

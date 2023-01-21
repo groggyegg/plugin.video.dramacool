@@ -23,25 +23,25 @@ SOFTWARE.
 """
 
 from abc import abstractmethod
-from os import path
+from os.path import join
 from re import compile, search
 
-from bs4 import BeautifulSoup
-from bs4.element import SoupStrainer, NavigableString
+from bs4 import BeautifulSoup, element
 from requests import Session, exceptions, utils
 from six.moves.urllib.parse import urlparse
-from xbmcext import Dialog, getLocalizedString, getAddonPath
+from xbmcext import Dialog, getAddonPath, getLocalizedString
 
 from pymaybe import maybe
 
-__all__ = ['SubtitleRequest', 'DramaListRequest', 'DramaDetailRequest', 'DramaDetailRequest', 'RecentlyDramaRequest',
-           'SearchRequest', 'EpisodeListRequest', 'ServerListRequest', 'StarListRequest', 'StarDramaRequest']
+
+class ConnectionError(OSError):
+    pass
 
 
 class Request(object):
     domains = 'watchasian.la', 'www1.dramacool.cr'
     session = Session()
-    tempfile = path.join(getAddonPath(), 'resources/data/tempfile')
+    tempfile = join(getAddonPath(), 'resources/data/tempfile')
 
     def get(self, path):
         for domain in self.domains:
@@ -87,13 +87,13 @@ class DramaListRequest(Request):
         return super(DramaListRequest, self).get(path)
 
     def parse(self, text, path):
-        soup = BeautifulSoup(text, 'html.parser', parse_only=SoupStrainer('li', {'data-genre': True}))
+        soup = BeautifulSoup(text, 'html.parser', parse_only=element.SoupStrainer('li', {'data-genre': True}))
         return [a.attrs['href'] for a in soup.find_all('a') if 'href' in a.attrs]
 
 
 class DramaDetailRequest(Request):
     def parse(self, text, path):
-        soup = BeautifulSoup(text, 'html.parser', parse_only=SoupStrainer('div', {'class': 'details'}))
+        soup = BeautifulSoup(text, 'html.parser', parse_only=element.SoupStrainer('div', {'class': 'details'}))
         poster = maybe(soup.find('img')).attrs['src'].or_none()
         title = soup.find('h1').text.strip()
         plot = ' '.join(p.text.strip() for p in soup.find_all(self.plot))
@@ -106,12 +106,14 @@ class DramaDetailRequest(Request):
 
     @staticmethod
     def plot(tag):
-        return tag.name == 'p' and isinstance(tag.next, NavigableString)
+        return tag.name == 'p' and isinstance(tag.next, element.NavigableString)
 
 
 class RecentlyDramaRequest(Request):
     def parse(self, text, path):
-        soup = BeautifulSoup(text, 'html.parser', parse_only=SoupStrainer('ul', {'class': ['list-star', 'switch-block list-episode-item', 'pagination']}))
+        soup = BeautifulSoup(text, 'html.parser', parse_only=element.SoupStrainer('ul', {'class': ['list-star',
+                                                                                                   'switch-block list-episode-item',
+                                                                                                   'pagination']}))
         return (self.episodes(soup.find('ul', {'class': ['list-star', 'switch-block list-episode-item']}, False)),
                 self.pagination(soup.find('ul', {'class': 'pagination'}, False), path))
 
@@ -120,9 +122,9 @@ class RecentlyDramaRequest(Request):
         return [(a.attrs['href'],
                  utils.requote_uri(a.find('img').attrs['data-original']),
                  a.find('span', {'class': 'time'}).text,
-                 "[{}] {} {}".format(a.find('span', {'class': 'type'}).text,
-                                     a.find('h3').text,
-                                     a.find('span', {'class': 'ep'}).text)) for a in tag.find_all('a')]
+                 u"[{}] {} {}".format(a.find('span', {'class': 'type'}).text,
+                                      a.find('h3').text,
+                                      a.find('span', {'class': 'ep'}).text)) for a in tag.find_all('a')]
 
     @staticmethod
     def pagination(tag, path):
@@ -138,13 +140,13 @@ class SearchRequest(RecentlyDramaRequest):
 
 class EpisodeListRequest(Request):
     def parse(self, text, path):
-        soup = BeautifulSoup(text, 'html.parser', parse_only=SoupStrainer('ul', {'class': 'list-episode-item-2 all-episode'}))
+        soup = BeautifulSoup(text, 'html.parser', parse_only=element.SoupStrainer('ul', {'class': 'list-episode-item-2 all-episode'}))
         return [(a.attrs['href'], "[{}] {}".format(a.find('span', {'class': 'type'}).text, a.find('h3').text.strip())) for a in soup.find_all('a')]
 
 
 class ServerListRequest(Request):
     def parse(self, text, path):
-        soup = BeautifulSoup(text, 'html.parser', parse_only=SoupStrainer('div', {'class': 'block watch-drama'}))
+        soup = BeautifulSoup(text, 'html.parser', parse_only=element.SoupStrainer('div', {'class': 'block watch-drama'}))
         return (soup.find('h1').text,
                 soup.find('a').attrs['href'],
                 [(urlparse(li.attrs['data-video'], 'https').geturl(), li.next.strip()) for li in soup.find_all('li', {'data-video': compile('//')})])
@@ -161,5 +163,5 @@ class StarListRequest(RecentlyDramaRequest):
 
 class StarDramaRequest(Request):
     def parse(self, text, path):
-        soup = BeautifulSoup(text, 'html.parser', parse_only=SoupStrainer('ul', {'class': 'list-episode-item'}))
+        soup = BeautifulSoup(text, 'html.parser', parse_only=element.SoupStrainer('ul', {'class': 'list-episode-item'}))
         return [(a.attrs['href'], a.find_next('h3').text, utils.requote_uri(a.find_next('img').attrs['data-original'])) for a in soup.find_all('a')]
