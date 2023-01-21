@@ -22,15 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from json import loads, dumps
-from os import makedirs, remove
-from os.path import exists, join
+from json import dumps, loads
+from os import makedirs, path
 
-from peewee import CharField, Model, SmallIntegerField, SQL, SqliteDatabase, TextField
+from peewee import CharField, Model, SmallIntegerField, SQL, SqliteDatabase
 from playhouse.sqlite_ext import DateTimeField
-from xbmcext import ListItem, getPath, getProfilePath
+from xbmcext import ListItem, getAddonPath, getAddonProfilePath
 
-__all__ = ['Drama', 'ExternalDatabase', 'InternalDatabase', 'RecentDrama', 'RecentFilter']
+if __name__ == '__main__':
+    from xbmcgui import ListItem
 
 
 class JSONField(CharField):
@@ -45,62 +45,44 @@ class JSONField(CharField):
 
 
 class ExternalDatabase(object):
-    profile = getProfilePath()
-    connection = SqliteDatabase(join(profile, 'dramacool.db'))
+    profile_path = getAddonProfilePath()
+    connection = SqliteDatabase(path.join(profile_path, 'dramacool.db'))
 
-    @staticmethod
-    def close():
-        ExternalDatabase.connection.close()
+    @classmethod
+    def close(cls):
+        cls.connection.close()
 
-    @staticmethod
-    def connect():
-        if not exists(ExternalDatabase.profile):
-            makedirs(ExternalDatabase.profile)
+    @classmethod
+    def connect(cls):
+        if not path.exists(cls.profile_path):
+            makedirs(cls.profile_path)
 
-        ExternalDatabase.connection.connect(True)
+        cls.connection.connect(True)
 
-    @staticmethod
-    def create():
-        ExternalDatabase.connection.create_tables([RecentDrama, RecentFilter])
-        ExternalDatabase.migration_20211114()
-        ExternalDatabase.connection.commit()
-
-    @staticmethod
-    def migration_20211114():
-        connection = SqliteDatabase(join(ExternalDatabase.profile, 'recently_viewed.db'))
-
-        if exists(connection.database):
-            class RecentlyViewed(Model):
-                path = TextField(primary_key=True, constraints=[SQL('ON CONFLICT REPLACE')])
-                last_visited = DateTimeField(constraints=[SQL('DEFAULT CURRENT_TIMESTAMP')])
-
-                class Meta:
-                    database = connection
-                    table_name = 'recently_viewed'
-
-            for recently_viewed in RecentlyViewed.select():
-                RecentDrama.create(path=recently_viewed.path, timestamp=recently_viewed.last_visited)
-
-            connection.close()
-            remove(connection.database)
+    @classmethod
+    def create(cls):
+        cls.connection.create_tables([RecentDrama, RecentFilter])
+        cls.connection.commit()
 
 
 class InternalDatabase(object):
-    connection = SqliteDatabase(join(getPath(), 'resources/data/dramacool.db'))
+    addon_path = getAddonPath()
+    connection = SqliteDatabase(path.join(addon_path if addon_path else '..', 'resources/data/dramacool.db'))
 
-    @staticmethod
-    def close():
-        InternalDatabase.connection.close()
+    @classmethod
+    def close(cls):
+        if cls.connection:
+            cls.connection.close()
 
-    @staticmethod
-    def connect():
-        InternalDatabase.connection.connect(True)
+    @classmethod
+    def connect(cls):
+        cls.connection.connect(True)
 
-    @staticmethod
-    def create():
+    @classmethod
+    def create(cls):
         from request import DramaDetailRequest, DramaListRequest
 
-        InternalDatabase.connection.create_tables([Drama])
+        cls.connection.create_tables([Drama])
 
         paths = {drama.path for drama in Drama.select().where((Drama.status == 'Completed') & Drama.mediatype.is_null(False))}
         mediatypes = ['/category/korean-movies', '/category/japanese-movies', '/category/taiwanese-movies', '/category/hong-kong-movies',
@@ -110,11 +92,26 @@ class InternalDatabase(object):
                       '/category/thailand-drama', '/category/indian-drama', '/kshow']
 
         for mediatype in mediatypes:
-            for path in DramaListRequest().get(mediatype):
-                if path not in paths:
-                    Drama.create(mediatype=mediatype, **DramaDetailRequest().get(path))
+            for path_ in DramaListRequest().get(mediatype):
+                if path_ not in paths:
+                    Drama.create(mediatype=mediatype, **DramaDetailRequest().get(path_))
 
-        InternalDatabase.connection.commit()
+        cls.connection.commit()
+
+    @classmethod
+    def update_title_year(cls):
+        from re import match
+
+        for drama in Drama.select().where(Drama.status == 'Completed'):
+            found_match = match(r'^(.+)\((\d{4})\)$', drama.title) or match(r'^(.+)\(JP (\d{4})\)$', drama.title)
+
+            if found_match:
+                title, year = found_match.groups()
+                drama.title = title.strip()
+                drama.year = int(year)
+                drama.save()
+
+        cls.connection.commit()
 
 
 class ExternalModel(Model):
@@ -143,7 +140,7 @@ class Drama(InternalModel, ListItem):
 
     def __init__(self, *args, **kwargs):
         super(Drama, self).__init__(*args, **kwargs)
-        self.setLabel(kwargs.pop('title'))
+        self.setLabel(kwargs['title'])
         self.setArt({'thumb': kwargs['poster'],
                      'poster': kwargs['poster'],
                      'banner': kwargs['poster'],
@@ -151,12 +148,7 @@ class Drama(InternalModel, ListItem):
                      'clearart': kwargs['poster'],
                      'landscape': kwargs['poster'],
                      'icon': kwargs['poster']} if 'poster' in kwargs else {})
-        self.setInfo('video', {'title': kwargs.pop('title') if 'title' in kwargs else None,
-                               'plot': kwargs.pop('plot') if 'plot' in kwargs else None,
-                               'country': kwargs.pop('country') if 'country' in kwargs else None,
-                               'status': kwargs.pop('status') if 'status' in kwargs else None,
-                               'genre': kwargs.pop('genre') if 'genre' in kwargs else None,
-                               'year': kwargs.pop('year') if 'year' in kwargs else None})
+        self.setInfo('video', {label: kwargs[label] for label in ('title', 'plot', 'country', 'status', 'genre', 'year') if kwargs.get(label)})
 
 
 class RecentDrama(ExternalModel):
@@ -174,5 +166,13 @@ class RecentFilter(ExternalModel, ListItem):
 
     def __init__(self, *args, **kwargs):
         super(RecentFilter, self).__init__(*args, **kwargs)
-        self.setLabel(kwargs.pop('title'))
+        self.setLabel(kwargs['title'])
         self.setArt({'icon': 'DefaultTVShows.png'})
+
+
+if __name__ == '__main__':
+    try:
+        InternalDatabase.connect()
+        InternalDatabase.create()
+    finally:
+        InternalDatabase.close()

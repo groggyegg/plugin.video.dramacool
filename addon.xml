@@ -1,27 +1,28 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.dramacool" name="DramaCool" version="3.0.4" provider-name="groggyegg">
+<addon id="plugin.video.dramacool" name="DramaCool" version="3.1.0" provider-name="groggyegg">
     <requires>
         <import addon="script.module.beautifulsoup4"/>
         <import addon="script.module.peewee"/>
-        <import addon="script.module.pymaybe"/>
         <import addon="script.module.requests"/>
         <import addon="script.module.resolveurl"/>
         <import addon="script.module.six"/>
-        <import addon="script.module.xbmcext" version="1.2.1"/>
+        <import addon="script.module.xbmcext"/>
     </requires>
     <extension point="xbmc.python.pluginsource" library="dramacool/addon.py">
         <provides>video</provides>
     </extension>
     <extension point="xbmc.addon.metadata">
-        <summary lang="en_GB">Video plugin for DramaCool</summary>
-        <description lang="en_GB">Watch Asian Drama and Korean Show with English subtitles.</description>
+        <description lang="en_GB">Watch Asian Drama and Korean Show with English subtitles on DramaCool.</description>
         <platform>all</platform>
         <license>MIT License</license>
         <source>https://github.com/groggyegg/plugin.video.dramacool</source>
-        <news>v3.0.4 (2022-07-02)
-            [new] supported resolvers will now display text with orange color
-            [fix] prevent exception from occurring when domain is blocked
-            [fix] updated redirect domains
+        <news>v3.1.0 (2023-01-21)
+            - update changes from xbmcext
+            - add filter year 2022
+            - remove old migration
+            - embed pymaybe dependency
+            - update dramacool urls
+            - update database
         </news>
         <assets>
             <icon>resources/icon.png</icon>
