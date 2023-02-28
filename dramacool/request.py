@@ -39,7 +39,7 @@ class ConnectionError(OSError):
 
 
 class Request(object):
-    domains = 'watchasian.la', 'www1.dramacool.cr'
+    domains = 'watchasian.id', 'www1.dramacool.cr'
     session = Session()
     tempfile = join(getAddonPath(), 'resources/data/tempfile')
 
@@ -50,7 +50,7 @@ class Request(object):
 
                 if response.status_code == 200:
                     return self.parse(response.text, path)
-            except exceptions.SSLError:
+            except (exceptions.ConnectTimeout, exceptions.SSLError):
                 pass
 
         raise ConnectionError(getLocalizedString(33504))
