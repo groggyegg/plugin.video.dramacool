@@ -45,9 +45,9 @@ def home():
         (plugin.getSerializedUrlFor('/recently-added', page=1), ListItem(getLocalizedString(33003), iconImage='DefaultRecentlyAddedEpisodes.png'), True),
         (plugin.getSerializedUrlFor('/recently-added-movie', page=1), ListItem(getLocalizedString(33004), iconImage='DefaultRecentlyAddedEpisodes.png'), True),
         (plugin.getSerializedUrlFor('/recently-added-kshow', page=1), ListItem(getLocalizedString(33005), iconImage='DefaultRecentlyAddedEpisodes.png'), True),
-        (plugin.getSerializedUrlFor('/drama-list'), ListItem(getLocalizedString(33006), iconImage='DefaultTVShows.png'), True),
-        (plugin.getSerializedUrlFor('/drama-movie'), ListItem(getLocalizedString(33007), iconImage='DefaultTVShows.png'), True),
-        (plugin.getSerializedUrlFor('/kshow', label=33008), ListItem(getLocalizedString(33008), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/drama'), ListItem(getLocalizedString(33006), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/movies'), ListItem(getLocalizedString(33007), iconImage='DefaultTVShows.png'), True),
+        (plugin.getSerializedUrlFor('/kshow'), ListItem(getLocalizedString(33008), iconImage='DefaultTVShows.png'), True),
         (plugin.getSerializedUrlFor('/most-popular-drama', page=1), ListItem(getLocalizedString(33009), iconImage='DefaultFavourites.png'), True),
         (plugin.getSerializedUrlFor('/list-star.html', page=1), ListItem(getLocalizedString(33010), iconImage='DefaultFavourites.png'), True)])
     plugin.endOfDirectory()
@@ -64,12 +64,13 @@ def search(type):
 
 @plugin.route('/search')
 def search_type(type, keyword, page):
-    dramas, pages = Request.search(plugin.getFullPath())
+    shows, pages = Request.search(plugin.getFullPath())
     items = []
 
-    for path, title, poster in dramas:
+    for path, title, poster in shows:
         item = Drama.get_or_none(Drama.path == path) if type == 'movies' else Drama(title=title, poster=poster)
-        items.append((plugin.getSerializedUrlFor(path), item if item else Drama.create(**Request.dramadetail(path)), True))
+        item = item if item else Drama.create(**Request.drama_detail(path))
+        items.append((plugin.getSerializedUrlFor(path), item, True))
 
     items.extend(iter_pages(pages))
 
@@ -86,7 +87,7 @@ def recently_viewed():
 
     for recent_drama in RecentDrama.select(RecentDrama.path).order_by(RecentDrama.timestamp.desc()):
         item = Drama.get_or_none(Drama.path == recent_drama.path)
-        item = item if item else Drama.create(**Request.dramadetail(recent_drama.path))
+        item = item if item else Drama.create(**Request.drama_detail(recent_drama.path))
         item.addContextMenuItems([(getLocalizedString(33100), 'RunPlugin({})'.format(plugin.getSerializedUrlFor('/recently-viewed', delete=item.path))),
                                   (getLocalizedString(33101), 'RunPlugin({})'.format(plugin.getSerializedUrlFor('/recently-viewed', delete='%')))])
         items.append((plugin.getUrlFor(item.path), item, True))
@@ -125,7 +126,7 @@ def delete_recently_filtered(delete):
 @plugin.route('/recently-added-movie')
 @plugin.route('/recently-added-kshow')
 def recently_added(page):
-    shows, pages = Request.recentlyadded(plugin.getFullPath())
+    shows, pages = Request.recently_added(plugin.getFullPath())
     items = []
 
     for path, poster, title in shows:
@@ -140,8 +141,8 @@ def recently_added(page):
     plugin.endOfDirectory()
 
 
-@plugin.route('/drama-list')
-def drama_category():
+@plugin.route('/drama')
+def drama():
     plugin.addDirectoryItems([
         (plugin.getSerializedUrlFor('/category/korean-drama'), ListItem(getLocalizedString(33200), iconImage='DefaultTVShows.png'), True),
         (plugin.getSerializedUrlFor('/category/japanese-drama'), ListItem(getLocalizedString(33201), iconImage='DefaultTVShows.png'), True),
@@ -154,8 +155,8 @@ def drama_category():
     plugin.endOfDirectory()
 
 
-@plugin.route('/drama-movie')
-def movie_category():
+@plugin.route('/movies')
+def movies():
     plugin.addDirectoryItems([
         (plugin.getSerializedUrlFor('/category/korean-movies'), ListItem(getLocalizedString(33300), iconImage='DefaultTVShows.png'), True),
         (plugin.getSerializedUrlFor('/category/japanese-movies'), ListItem(getLocalizedString(33301), iconImage='DefaultTVShows.png'), True),
@@ -197,8 +198,11 @@ def drama_filter():
         for item in items.values():
             item.sort()
 
-        plugin.redirect(plugin.path, characters=items[getLocalizedString(33401)], genres=items[getLocalizedString(33402)],
-                        statuses=items[getLocalizedString(33403)], years=items[getLocalizedString(33404)])
+        characters = dumps(items[getLocalizedString(33401)])
+        genres = dumps(items[getLocalizedString(33402)])
+        statuses = dumps(items[getLocalizedString(33403)])
+        years = dumps(items[getLocalizedString(33404)])
+        plugin.redirect(f'{plugin.path}/{characters}/{genres}/{statuses}/{years}')
 
 
 @plugin.route('/category/{}/{characters:json}/{genres:json}/{statuses:json}/{years:json}')
@@ -218,7 +222,7 @@ def drama_list(characters, genres, statuses, years):
     if years:
         expression &= Drama.year << years
 
-    RecentFilter.create(path=plugin.getSerializedFullPath(), title=' '.join(title))
+    RecentFilter.create(path=plugin.path, title=plugin.path)
     items = []
 
     for item in Drama.select().where(expression):
@@ -231,43 +235,44 @@ def drama_list(characters, genres, statuses, years):
 
 
 @plugin.route('/most-popular-drama')
-def most_popular_drama(page):
-    dramas, pagination = SearchRequest().get(plugin.getFullPath())
+def popular_drama(page):
+    shows, pages = Request.most_popular_drama(plugin.getFullPath())
     items = []
 
-    for path, title, poster in dramas:
+    for path in shows:
         item = Drama.get_or_none(Drama.path == path)
-        item = item if item else Drama(title=title, poster=poster)
+        item = item if item else Drama.create(**Request.drama_detail(path))
         items.append((plugin.getSerializedUrlFor(path), item, True))
 
-    items.extend(iter_pages(pagination))
+    items.extend(iter_pages(pages))
     plugin.setContent('tvshows')
     plugin.addDirectoryItems(items)
     plugin.endOfDirectory()
 
 
 @plugin.route('/list-star.html')
-def star_list(page):
-    stars, pagination = StarListRequest().get(plugin.getFullPath())
+def popular_star(page):
+    stars, pages = Request.list_star(plugin.getFullPath())
     items = []
 
     for path, title, poster, plot in stars:
         item = Drama(title=title, poster=poster, plot=plot)
         items.append((plugin.getSerializedUrlFor(path), item, True))
 
-    items.extend(iter_pages(pagination))
+    items.extend(iter_pages(pages))
     plugin.addDirectoryItems(items)
     plugin.endOfDirectory()
 
 
 @plugin.route('/star/{}')
-def star_drama():
-    dramas = StarDramaRequest().get(plugin.getFullPath())
+def star():
+    shows = Request.star(plugin.getFullPath())
     items = []
 
-    for path, title, poster in dramas:
+    for path in shows:
         item = Drama.get_or_none(Drama.path == path)
-        items.append((plugin.getSerializedUrlFor(path), item if item else Drama(title=title, poster=poster), True))
+        item = item if item else Drama.create(**Request.drama_detail(path))
+        items.append((plugin.getSerializedUrlFor(path), item, True))
 
     plugin.addSortMethods(SortMethod.TITLE, SortMethod.VIDEO_YEAR)
     plugin.setContent('tvshows')
@@ -279,7 +284,7 @@ def star_drama():
 def episode_list():
     items = []
 
-    for path, title in EpisodeListRequest().get(plugin.getFullPath()):
+    for path, title in Request.drama_detail_episode(plugin.getFullPath()):
         item = Drama(title=title)
         item.setProperty('IsPlayable', 'true')
         items.append((plugin.getSerializedUrlFor(path), item, False))
@@ -291,9 +296,9 @@ def episode_list():
 
 @plugin.route('/{:re("[^.]+.html")}')
 def resolve_episode():
-    title, path, servers = ServerListRequest().get(plugin.getFullPath())
-    position = Dialog().select(getLocalizedString(33500), ['[COLOR orange]{}[/COLOR]'.format(name) if scrape_supported(video, '(.+)') else name
-                                                           for video, name in servers])
+    title, path, servers = Request.video(plugin.getFullPath())
+    servers = ['[COLOR orange]{}[/COLOR]'.format(server) if scrape_supported(video, '(.+)') else server for video, server in servers]
+    position = Dialog().select(getLocalizedString(33500), servers)
     item = ListItem(title)
     url = False
 
@@ -304,10 +309,6 @@ def resolve_episode():
         if url:
             RecentDrama.create(path=path)
             item.setPath(url)
-            subtitle = SubtitleRequest().get(servers[position][0])
-
-            if subtitle:
-                item.setSubtitles([subtitle])
         else:
             Dialog().notification(getLocalizedString(33502), '')
 

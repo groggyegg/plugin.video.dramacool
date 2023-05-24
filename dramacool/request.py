@@ -39,7 +39,7 @@ class ConnectionError(OSError):
 
 
 class Request(object):
-    domains = 'watchasian.id', 'www1.dramacool.cr'
+    domains = 'www1.watchasian.id', 'dramacool.cy'
     session = Session()
     tempfile = join(getAddonPath(), 'resources/data/tempfile')
 
@@ -57,7 +57,7 @@ class Request(object):
         raise ConnectionError(getLocalizedString(33504))
 
     @classmethod
-    def dramadetail(cls, path):
+    def drama_detail(cls, path):
         doc = BeautifulSoup(cls.get(path), 'html.parser', parse_only=SoupStrainer('div', {'class': 'details'}))
         return {'path': path,
                 'poster': doc.find('img').attrs['src'],
@@ -100,24 +100,31 @@ class Request(object):
         return sorted(translation[genre] for genre in genres if genre in translation)
 
     @classmethod
-    def dramadetail_episode(cls, path):
+    def drama_detail_episode(cls, path):
         doc = BeautifulSoup(cls.get(path), 'html.parser', parse_only=SoupStrainer('ul', {'class': 'list-episode-item-2 all-episode'}))
         return [(a.attrs['href'], "[{}] {}".format(a.find('span', {'class': 'type'}).text, a.find('h3').text.strip())) for a in doc.find_all('a')]
 
     @classmethod
-    def dramalist(cls):
+    def drama_list(cls):
         doc = BeautifulSoup(cls.get('/drama-list'), 'html.parser', parse_only=SoupStrainer('li', {'data-genre': True}))
         return [a.attrs['href'] for a in doc.find_all('a')]
 
     @classmethod
-    def liststar(cls, path):
+    def list_star(cls, path):
         doc = BeautifulSoup(cls.get(path), 'html.parser', parse_only=SoupStrainer('ul', {'class': ['list-star', 'pagination']}))
         stars = [(li.find_next('a').attrs['href'], li.find_next('h3').text, li.find_next('img').attrs['data-original'], li.find_next('ul').text.strip()) for li in doc.find('ul', {'class': 'list-star'}).find_all('li', recursive=False)]
         pages = [(urlparse(path).path + a.attrs['href'], a.text) for a in doc.find_all('a', text=['< Previous', 'Next >'])]
         return stars, pages
 
     @classmethod
-    def recentlyadded(cls, path):
+    def most_popular_drama(cls, path):
+        doc = BeautifulSoup(cls.get(path), 'html.parser', parse_only=SoupStrainer('ul', {'class': ['switch-block list-episode-item', 'pagination']}))
+        shows = [a.attrs['href'] for a in doc.find_all('a', {'class': 'img'})]
+        pages = [(urlparse(path).path + a.attrs['href'], a.text) for a in doc.find_all('a', text=['< Previous', 'Next >'])]
+        return shows, pages
+
+    @classmethod
+    def recently_added(cls, path):
         doc = BeautifulSoup(cls.get(path), 'html.parser', parse_only=SoupStrainer('ul', {'class': ['switch-block list-episode-item', 'pagination']}))
         shows = [(a.attrs['href'], a.find('img').attrs['data-original'], '[{}] {} {}'.format(a.find('span', {'class': 'type'}).text, a.find('h3').text, a.find('span', {'class': 'ep'}).text)) for a in doc.find_all('a', {'class': 'img'})]
         pages = [(urlparse(path).path + a.attrs['href'], a.text) for a in doc.find_all('a', text=['< Previous', 'Next >'])]

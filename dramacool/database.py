@@ -28,7 +28,7 @@ from os.path import join, exists
 
 from peewee import CharField, Model, SmallIntegerField, SQL, SqliteDatabase
 from playhouse.sqlite_ext import DateTimeField
-from xbmcext import ListItem, getAddonPath, getAddonProfilePath
+from xbmcext import ListItem, getAddonPath, getAddonProfilePath, getLocalizedString
 
 from request import Request
 
@@ -85,11 +85,11 @@ class InternalDatabase(object):
     def create(cls):
         cls.connection.create_tables([Drama])
 
-        paths = {drama.path for drama in Drama.select().where((Drama.status == 'Completed'))}
+        paths = {drama.path for drama in Drama.select().where((Drama.status == 33710))}
 
-        for path in Request.dramalist():
+        for path in Request.drama_list():
             if path not in paths:
-                Drama.create(**Request.dramadetail(path))
+                Drama.create(**Request.drama_detail(path))
 
         cls.connection.commit()
 
@@ -127,7 +127,10 @@ class Drama(InternalModel, ListItem):
                      'clearart': kwargs['poster'],
                      'landscape': kwargs['poster'],
                      'icon': kwargs['poster']} if 'poster' in kwargs else {})
-        self.setInfo('video', {label: kwargs[label] for label in ('title', 'plot', 'country', 'status', 'genre', 'year') if kwargs.get(label)})
+        labels = {label: kwargs[label] for label in ['title', 'plot', 'year'] if label in kwargs}
+        labels.update({label: getLocalizedString(kwargs[label]) for label in ['country', 'status'] if label in kwargs})
+        labels.update({label: list(map(getLocalizedString, kwargs[label])) for label in ['genre'] if label in kwargs})
+        self.setInfo('video', labels)
 
 
 class RecentDrama(ExternalModel):

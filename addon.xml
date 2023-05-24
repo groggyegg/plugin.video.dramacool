@@ -5,7 +5,6 @@
         <import addon="script.module.peewee"/>
         <import addon="script.module.requests"/>
         <import addon="script.module.resolveurl"/>
-        <import addon="script.module.six"/>
         <import addon="script.module.xbmcext"/>
     </requires>
     <extension point="xbmc.python.pluginsource" library="dramacool/addon.py">
