@@ -175,7 +175,7 @@ msgid "Choose Server"
 msgstr ""
 
 msgctxt "#33502"
-msgid "Unsupported Server"
+msgid "ResolveURL Failed"
 msgstr ""
 
 msgctxt "#33503"

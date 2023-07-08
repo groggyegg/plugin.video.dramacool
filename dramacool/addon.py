@@ -26,7 +26,8 @@ from functools import reduce
 from json import dumps
 from operator import or_
 
-from resolveurl import resolve, resolver, scrape_supported
+from resolveurl import resolve, scrape_supported
+from resolveurl.resolver import ResolverError
 from xbmcext import Dialog, Keyboard, ListItem, Plugin, SortMethod, executebuiltin, getLocalizedString, sleep
 
 from database import Drama, ExternalDatabase, InternalDatabase, RecentDrama, RecentFilter
@@ -131,7 +132,10 @@ def recently_added(page):
 
     for path, poster, title in shows:
         item = Drama.select().where(Drama.poster == poster).get_or_none()
-        item = item if item else Drama(title=title, poster=poster)
+        if item:
+            item.setLabel(title)
+        else:
+            item = Drama(title=title, poster=poster)
         item.setProperty('IsPlayable', 'true')
         items.append((plugin.getSerializedUrlFor(path), item, False))
 
@@ -298,22 +302,23 @@ def episode_list():
 @plugin.route('/{:re("[^.]+.html")}')
 def resolve_episode():
     title, path, servers = Request.video(plugin.getFullPath())
-    servers = ['[COLOR orange]{}[/COLOR]'.format(server) if scrape_supported(video, '(.+)') else server for video, server in servers]
-    position = Dialog().select(getLocalizedString(33500), servers)
+    position = Dialog().select(getLocalizedString(33500), ['[COLOR orange]{}[/COLOR]'.format(server) if scrape_supported(video, '(.+)') else server
+                                                           for video, server in servers])
     item = ListItem(title)
     url = False
 
     if position != -1:
         executebuiltin('ActivateWindow(busydialognocancel)')
-        url = resolve(servers[position][0])
+        try:
+            url = resolve(servers[position][0])
 
-        if url:
-            RecentDrama.create(path=path)
-            item.setPath(url)
-        else:
-            Dialog().notification(getLocalizedString(33502), '')
-
-        executebuiltin('Dialog.Close(busydialognocancel)')
+            if url:
+                RecentDrama.create(path=path)
+                item.setPath(url)
+            else:
+                Dialog().notification(getLocalizedString(33502), '')
+        finally:
+            executebuiltin('Dialog.Close(busydialognocancel)')
     else:
         executebuiltin('Playlist.Clear')
         sleep(500)
@@ -325,7 +330,7 @@ def iter_pages(pages):
     for path, label in pages:
         item = ListItem(getLocalizedString(33601), iconImage='DefaultFolderBack.png') if label == '< Previous' else ListItem(getLocalizedString(33602))
         item.setProperty('SpecialSort', 'bottom')
-        yield plugin.getUrlFor(path), item, True
+        yield plugin.getSerializedUrlFor(path), item, True
 
 
 if __name__ == '__main__':
@@ -334,7 +339,7 @@ if __name__ == '__main__':
         ExternalDatabase.create()
         InternalDatabase.connect()
         plugin()
-    except (ConnectionError, resolver.ResolverError) as e:
+    except (ConnectionError, ResolverError, TimeoutError) as e:
         Dialog().notification(str(e), '')
     finally:
         ExternalDatabase.close()
