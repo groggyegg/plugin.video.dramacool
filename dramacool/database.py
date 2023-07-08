@@ -86,10 +86,18 @@ class InternalDatabase(object):
         cls.connection.create_tables([Drama])
 
         paths = {drama.path for drama in Drama.select().where((Drama.status == 33710))}
+        categories = ['/category/korean-movies', '/category/japanese-movies', '/category/taiwanese-movies',
+                      '/category/hong-kong-movies', '/category/chinese-movies', '/category/american-movies',
+                      '/category/other-asia-movies', '/category/thailand-movies', '/category/indian-movies',
+                      '/category/korean-drama', '/category/japanese-drama', '/category/taiwanese-drama',
+                      '/category/hong-kong-drama', '/category/chinese-drama',
+                      '/category/american-drama', '/category/other-asia-drama', '/category/thailand-drama',
+                      '/category/indian-drama', '/kshow']
 
-        for path in Request.drama_list():
-            if path not in paths:
-                Drama.create(**Request.drama_detail(path))
+        for category in categories:
+            for path in Request.drama_list(category):
+                if path not in paths:
+                    Drama.create(**Request.drama_detail(path), category=category)
 
         cls.connection.commit()
 
@@ -106,6 +114,7 @@ class InternalModel(Model):
 
 class Drama(InternalModel, ListItem):
     path = CharField(primary_key=True, constraints=[SQL('ON CONFLICT REPLACE')])
+    category = CharField(null=True)
     poster = CharField()
     title = CharField()
     plot = CharField()

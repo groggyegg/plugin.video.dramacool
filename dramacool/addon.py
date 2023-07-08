@@ -191,8 +191,9 @@ def drama_filter():
             (getLocalizedString(33709), 33709),
             (getLocalizedString(33710), 33710),
             (getLocalizedString(33711), 33711)],
-        getLocalizedString(33404): ['2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011',
-                                    '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023']})
+        getLocalizedString(33404): ['2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009',
+                                    '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019',
+                                    '2020', '2021', '2022', '2023', '2024']})
 
     if items:
         for item in items.values():
@@ -208,7 +209,7 @@ def drama_filter():
 @plugin.route('/category/{}/{characters:json}/{genres:json}/{statuses:json}/{years:json}')
 @plugin.route('/kshow/{characters:json}/{genres:json}/{statuses:json}/{years:json}')
 def drama_list(characters, genres, statuses, years):
-    expression = Drama.mediatype == plugin.path
+    expression = Drama.category == '/'.join(plugin.path.split('/')[:-4])
 
     if characters:
         expression &= reduce(or_, [~(Drama.title % '[a-zA-Z]*') if character == '#' else (Drama.title % (character + '*')) for character in characters])

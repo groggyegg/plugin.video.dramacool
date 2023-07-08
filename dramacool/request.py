@@ -39,7 +39,7 @@ class ConnectionError(OSError):
 
 
 class Request(object):
-    domains = 'www1.watchasian.id', 'dramacool.cy'
+    domains = 'watchasian.mx', 'dramacool.hr'
     session = Session()
     tempfile = join(getAddonPath(), 'resources/data/tempfile')
 
@@ -65,7 +65,7 @@ class Request(object):
                 'plot': ' '.join(p.text.strip() for p in doc.find_all(lambda element: element.name == 'p' and isinstance(element.next, NavigableString))),
                 'country': cls.country(doc.find('a', {'href': compile('^/country/')}).text),
                 'status': cls.status(doc.find('a', {'href': compile('^/popular-')}).text),
-                'year': int(maybe(doc.find('a', {'href': compile('^/released-in-')})).text.or_else('0')),
+                'year': int(maybe(doc.find('a', {'href': compile('^/released-in-')}, string=compile('\\d+'))).text.or_else('0')),
                 'genre': cls.genre({a.text for a in doc.find_all('a', {'href': compile('^/genre/')})})}
 
     @classmethod
@@ -105,8 +105,8 @@ class Request(object):
         return [(a.attrs['href'], "[{}] {}".format(a.find('span', {'class': 'type'}).text, a.find('h3').text.strip())) for a in doc.find_all('a')]
 
     @classmethod
-    def drama_list(cls):
-        doc = BeautifulSoup(cls.get('/drama-list'), 'html.parser', parse_only=SoupStrainer('li', {'data-genre': True}))
+    def drama_list(cls, path):
+        doc = BeautifulSoup(cls.get(path), 'html.parser', parse_only=SoupStrainer('li', {'data-genre': True}))
         return [a.attrs['href'] for a in doc.find_all('a')]
 
     @classmethod
