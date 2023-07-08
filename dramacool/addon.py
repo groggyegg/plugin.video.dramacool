@@ -239,8 +239,12 @@ def drama_list(characters, genres, statuses, years):
     if years:
         expression &= Drama.year << years
 
-    RecentFilter.insert(path=plugin.path, title=plugin.path).on_conflict(
-        conflict_target=[RecentFilter.path], update={RecentFilter.timestamp: datetime.now()}).execute()
+    try:
+        RecentFilter.insert(path=plugin.path, title=plugin.path).on_conflict(
+            conflict_target=[RecentFilter.path], update={RecentFilter.timestamp: datetime.now()}).execute()
+    except e:
+        Dialog().notification(str(e), '')
+
     items = []
 
     for item in Drama.select().where(expression):
