@@ -66,6 +66,10 @@ msgctxt "#33101"
 msgid "Remove All"
 msgstr ""
 
+msgctxt "#33102"
+msgid "Rename"
+msgstr ""
+
 # ----------------------------------------
 # Drama List
 # ----------------------------------------

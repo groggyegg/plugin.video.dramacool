@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from datetime import datetime
 from functools import reduce
 from json import dumps
 from operator import or_
@@ -103,7 +104,8 @@ def recently_filtered():
     items = []
 
     for recent_filter in RecentFilter.select(RecentFilter.path, RecentFilter.title).order_by(RecentFilter.timestamp.desc()):
-        recent_filter.addContextMenuItems([(getLocalizedString(33100), 'RunPlugin({})'.format(plugin.getSerializedUrlFor('/recently-filtered', delete=recent_filter.path))),
+        recent_filter.addContextMenuItems([(getLocalizedString(33102), 'RunPlugin({})'.format(plugin.getSerializedUrlFor('/recently-filtered', rename=recent_filter.path))),
+                                           (getLocalizedString(33100), 'RunPlugin({})'.format(plugin.getSerializedUrlFor('/recently-filtered', delete=recent_filter.path))),
                                            (getLocalizedString(33101), 'RunPlugin({})'.format(plugin.getSerializedUrlFor('/recently-filtered', delete='%')))])
         items.append((plugin.getUrlFor(recent_filter.path), recent_filter, True))
 
@@ -121,6 +123,16 @@ def delete_recently_viewed(delete):
 def delete_recently_filtered(delete):
     RecentFilter.delete().where(RecentFilter.path ** delete).execute()
     executebuiltin('Container.Refresh')
+
+
+@plugin.route('/recently-filtered')
+def rename_recently_filtered(rename):
+    keyboard = Keyboard()
+    keyboard.doModal()
+
+    if keyboard.isConfirmed() and keyboard.getText():
+        RecentFilter.update(title=keyboard.getText()).where(RecentFilter.path == rename).execute()
+        executebuiltin('Container.Refresh')
 
 
 @plugin.route('/recently-added')
@@ -227,7 +239,8 @@ def drama_list(characters, genres, statuses, years):
     if years:
         expression &= Drama.year << years
 
-    RecentFilter.create(path=plugin.path, title=plugin.path)
+    RecentFilter.insert(path=plugin.path, title=plugin.path).on_conflict(
+        conflict_target=[RecentFilter.path], update={RecentFilter.timestamp: datetime.now()}).execute()
     items = []
 
     for item in Drama.select().where(expression):

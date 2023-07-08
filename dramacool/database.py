@@ -148,8 +148,8 @@ class RecentDrama(ExternalModel):
 
 
 class RecentFilter(ExternalModel, ListItem):
-    path = CharField(null=False)
-    title = CharField(primary_key=True, constraints=[SQL('ON CONFLICT REPLACE')])
+    path = CharField(primary_key=True, constraints=[SQL('ON CONFLICT REPLACE')])
+    title = CharField()
     timestamp = DateTimeField(constraints=[SQL('DEFAULT CURRENT_TIMESTAMP')])
 
     def __new__(cls, *args, **kwargs):
