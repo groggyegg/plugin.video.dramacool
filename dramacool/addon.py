@@ -306,13 +306,14 @@ def star():
 def episode_list():
     items = []
 
-    for path, title in Request.drama_detail_episode(plugin.getFullPath()):
-        item = Drama(title=title)
+    for path, title, episode in Request.drama_detail_episode(plugin.getFullPath()):
+        item = Drama(title=title, episode=episode)
         item.setProperty('IsPlayable', 'true')
         items.append((plugin.getSerializedUrlFor(path), item, False))
 
     plugin.setContent('episodes')
     plugin.addDirectoryItems(items)
+    plugin.addSortMethods(SortMethod.EPISODE)
     plugin.endOfDirectory(cacheToDisc=False)
 
 

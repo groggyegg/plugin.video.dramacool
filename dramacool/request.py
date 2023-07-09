@@ -25,7 +25,7 @@ SOFTWARE.
 from __future__ import unicode_literals
 
 from os.path import join
-from re import compile
+from re import compile, search
 
 from bs4 import BeautifulSoup, NavigableString, SoupStrainer
 from requests import Session
@@ -102,7 +102,8 @@ class Request(object):
     @classmethod
     def drama_detail_episode(cls, path):
         doc = BeautifulSoup(cls.get(path), 'html.parser', parse_only=SoupStrainer('ul', {'class': 'list-episode-item-2 all-episode'}))
-        return [(a.attrs['href'], "[{}] {}".format(a.find('span', {'class': 'type'}).text, a.find('h3').text.strip())) for a in doc.find_all('a')]
+        for a in doc.find_all('a'):
+            yield a.attrs['href'], "[{}] {}".format(a.find('span', {'class': 'type'}).text, a.find('h3').text.strip()), int(maybe(search('Episode (\\d+)', a.find('h3').text)).group(1).or_else('0'))
 
     @classmethod
     def drama_list(cls, path):

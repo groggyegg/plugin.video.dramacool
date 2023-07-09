@@ -136,7 +136,7 @@ class Drama(InternalModel, ListItem):
                      'clearart': kwargs['poster'],
                      'landscape': kwargs['poster'],
                      'icon': kwargs['poster']} if 'poster' in kwargs else {})
-        labels = {label: kwargs[label] for label in ['title', 'plot', 'year'] if label in kwargs}
+        labels = {label: kwargs[label] for label in ['title', 'plot', 'year', 'episode'] if label in kwargs}
         labels.update({label: getLocalizedString(kwargs[label]) for label in ['country', 'status'] if label in kwargs})
         labels.update({label: list(map(getLocalizedString, kwargs[label])) for label in ['genre'] if label in kwargs})
         self.setInfo('video', labels)

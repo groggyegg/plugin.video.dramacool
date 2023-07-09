@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.dramacool" name="DramaCool" version="3.2.0" provider-name="groggyegg">
+<addon id="plugin.video.dramacool" name="DramaCool" version="3.2.1" provider-name="groggyegg">
     <requires>
         <import addon="script.module.beautifulsoup4"/>
         <import addon="script.module.peewee"/>
@@ -15,11 +15,8 @@
         <platform>all</platform>
         <license>MIT License</license>
         <source>https://github.com/groggyegg/plugin.video.dramacool</source>
-        <news>v3.2.0 (2023-07-09)
-            - update domain
-            - update database
-            - support for renaming recently filtered
-            - general code improvement
+        <news>v3.2.1 (2023-07-09)
+            - fix episode sorting
         </news>
         <assets>
             <icon>resources/icon.png</icon>
