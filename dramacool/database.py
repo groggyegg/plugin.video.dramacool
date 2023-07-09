@@ -23,11 +23,14 @@ SOFTWARE.
 """
 
 from json import dumps, loads
-from os import makedirs, path
+from os import makedirs
+from os.path import join, exists
 
 from peewee import CharField, Model, SmallIntegerField, SQL, SqliteDatabase
 from playhouse.sqlite_ext import DateTimeField
-from xbmcext import ListItem, getAddonPath, getAddonProfilePath
+from xbmcext import ListItem, getAddonPath, getAddonProfilePath, getLocalizedString
+
+from request import Request
 
 if __name__ == '__main__':
     from xbmcgui import ListItem
@@ -46,7 +49,7 @@ class JSONField(CharField):
 
 class ExternalDatabase(object):
     profile_path = getAddonProfilePath()
-    connection = SqliteDatabase(path.join(profile_path, 'dramacool.db'))
+    connection = SqliteDatabase(join(profile_path, 'dramacool.db'))
 
     @classmethod
     def close(cls):
@@ -54,7 +57,7 @@ class ExternalDatabase(object):
 
     @classmethod
     def connect(cls):
-        if not path.exists(cls.profile_path):
+        if not exists(cls.profile_path):
             makedirs(cls.profile_path)
 
         cls.connection.connect(True)
@@ -67,7 +70,7 @@ class ExternalDatabase(object):
 
 class InternalDatabase(object):
     addon_path = getAddonPath()
-    connection = SqliteDatabase(path.join(addon_path if addon_path else '..', 'resources/data/dramacool.db'))
+    connection = SqliteDatabase(join(addon_path if addon_path else '..', 'resources/data/dramacool.db'))
 
     @classmethod
     def close(cls):
@@ -80,36 +83,21 @@ class InternalDatabase(object):
 
     @classmethod
     def create(cls):
-        from request import DramaDetailRequest, DramaListRequest
-
         cls.connection.create_tables([Drama])
 
-        paths = {drama.path for drama in Drama.select().where((Drama.status == 'Completed') & Drama.mediatype.is_null(False))}
-        mediatypes = ['/category/korean-movies', '/category/japanese-movies', '/category/taiwanese-movies', '/category/hong-kong-movies',
-                      '/category/chinese-movies', '/category/american-movies', '/category/other-asia-movies', '/category/thailand-movies',
-                      '/category/indian-movies', '/category/korean-drama', '/category/japanese-drama', '/category/taiwanese-drama',
-                      '/category/hong-kong-drama', '/category/chinese-drama', '/category/american-drama', '/category/other-asia-drama',
-                      '/category/thailand-drama', '/category/indian-drama', '/kshow']
+        paths = {drama.path for drama in Drama.select().where((Drama.status == 33710))}
+        categories = ['/category/korean-movies', '/category/japanese-movies', '/category/taiwanese-movies',
+                      '/category/hong-kong-movies', '/category/chinese-movies', '/category/american-movies',
+                      '/category/other-asia-movies', '/category/thailand-movies', '/category/indian-movies',
+                      '/category/korean-drama', '/category/japanese-drama', '/category/taiwanese-drama',
+                      '/category/hong-kong-drama', '/category/chinese-drama',
+                      '/category/american-drama', '/category/other-asia-drama', '/category/thailand-drama',
+                      '/category/indian-drama', '/kshow']
 
-        for mediatype in mediatypes:
-            for path_ in DramaListRequest().get(mediatype):
-                if path_ not in paths:
-                    Drama.create(mediatype=mediatype, **DramaDetailRequest().get(path_))
-
-        cls.connection.commit()
-
-    @classmethod
-    def update_title_year(cls):
-        from re import match
-
-        for drama in Drama.select().where(Drama.status == 'Completed'):
-            found_match = match(r'^(.+)\((\d{4})\)$', drama.title) or match(r'^(.+)\(JP (\d{4})\)$', drama.title)
-
-            if found_match:
-                title, year = found_match.groups()
-                drama.title = title.strip()
-                drama.year = int(year)
-                drama.save()
+        for category in categories:
+            for path in Request.drama_list(category):
+                if path not in paths:
+                    Drama.create(**Request.drama_detail(path), category=category)
 
         cls.connection.commit()
 
@@ -126,14 +114,14 @@ class InternalModel(Model):
 
 class Drama(InternalModel, ListItem):
     path = CharField(primary_key=True, constraints=[SQL('ON CONFLICT REPLACE')])
-    poster = CharField(null=True)
-    title = CharField(index=True)
-    plot = CharField(null=True)
-    country = CharField(null=True, index=True)
-    status = CharField(null=True, index=True)
-    genre = JSONField(null=True, index=True)
-    year = SmallIntegerField(null=True, index=True)
-    mediatype = CharField(null=True, index=True)
+    category = CharField(null=True)
+    poster = CharField()
+    title = CharField()
+    plot = CharField()
+    country = SmallIntegerField()
+    status = SmallIntegerField()
+    genre = JSONField()
+    year = SmallIntegerField()
 
     def __new__(cls, *args, **kwargs):
         return super(Drama, cls).__new__(cls)
@@ -148,7 +136,10 @@ class Drama(InternalModel, ListItem):
                      'clearart': kwargs['poster'],
                      'landscape': kwargs['poster'],
                      'icon': kwargs['poster']} if 'poster' in kwargs else {})
-        self.setInfo('video', {label: kwargs[label] for label in ('title', 'plot', 'country', 'status', 'genre', 'year') if kwargs.get(label)})
+        labels = {label: kwargs[label] for label in ['title', 'plot', 'year'] if label in kwargs}
+        labels.update({label: getLocalizedString(kwargs[label]) for label in ['country', 'status'] if label in kwargs})
+        labels.update({label: list(map(getLocalizedString, kwargs[label])) for label in ['genre'] if label in kwargs})
+        self.setInfo('video', labels)
 
 
 class RecentDrama(ExternalModel):
@@ -157,8 +148,8 @@ class RecentDrama(ExternalModel):
 
 
 class RecentFilter(ExternalModel, ListItem):
-    path = CharField(null=False)
-    title = CharField(primary_key=True, constraints=[SQL('ON CONFLICT REPLACE')])
+    path = CharField(primary_key=True, constraints=[SQL('ON CONFLICT REPLACE')])
+    title = CharField()
     timestamp = DateTimeField(constraints=[SQL('DEFAULT CURRENT_TIMESTAMP')])
 
     def __new__(cls, *args, **kwargs):

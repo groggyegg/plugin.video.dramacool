@@ -66,6 +66,10 @@ msgctxt "#33101"
 msgid "Remove All"
 msgstr ""
 
+msgctxt "#33102"
+msgid "Rename"
+msgstr ""
+
 # ----------------------------------------
 # Drama List
 # ----------------------------------------
@@ -175,7 +179,7 @@ msgid "Choose Server"
 msgstr ""
 
 msgctxt "#33502"
-msgid "Unsupported Server"
+msgid "ResolveURL Failed"
 msgstr ""
 
 msgctxt "#33503"
@@ -190,10 +194,6 @@ msgstr ""
 # Pagination
 # ----------------------------------------
 
-msgctxt "#33600"
-msgid "<< First"
-msgstr ""
-
 msgctxt "#33601"
 msgid "< Previous"
 msgstr ""
@@ -202,6 +202,94 @@ msgctxt "#33602"
 msgid "Next >"
 msgstr ""
 
-msgctxt "#33603"
-msgid "Last >>"
+msgctxt "#33700"
+msgid "Korean"
+msgstr ""
+
+msgctxt "#33701"
+msgid "Japanese"
+msgstr ""
+
+msgctxt "#33702"
+msgid "Taiwanese"
+msgstr ""
+
+msgctxt "#33703"
+msgid "Hong Kong"
+msgstr ""
+
+msgctxt "#33704"
+msgid "Chinese"
+msgstr ""
+
+msgctxt "#33705"
+msgid "American"
+msgstr ""
+
+msgctxt "#33706"
+msgid "Other Asia"
+msgstr ""
+
+msgctxt "#33707"
+msgid "Thailand"
+msgstr ""
+
+msgctxt "#33708"
+msgid "Indian"
+msgstr ""
+
+msgctxt "#33709"
+msgid "Ongoing"
+msgstr ""
+
+msgctxt "#33710"
+msgid "Completed"
+msgstr ""
+
+msgctxt "#33711"
+msgid "Upcoming"
+msgstr ""
+
+msgctxt "#33712"
+msgid "Action"
+msgstr ""
+
+msgctxt "#33713"
+msgid "Adventure"
+msgstr ""
+
+msgctxt "#33714"
+msgid "Comedy"
+msgstr ""
+
+msgctxt "#33715"
+msgid "Crime"
+msgstr ""
+
+msgctxt "#33716"
+msgid "Drama"
+msgstr ""
+
+msgctxt "#33717"
+msgid "Fantasy"
+msgstr ""
+
+msgctxt "#33718"
+msgid "Horror"
+msgstr ""
+
+msgctxt "#33719"
+msgid "Mystery"
+msgstr ""
+
+msgctxt "#33720"
+msgid "Romance"
+msgstr ""
+
+msgctxt "#33721"
+msgid "Sci-fi"
+msgstr ""
+
+msgctxt "#33722"
+msgid "Thriller"
 msgstr ""
