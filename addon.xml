@@ -15,8 +15,8 @@
         <platform>all</platform>
         <license>MIT License</license>
         <source>https://github.com/groggyegg/plugin.video.dramacool</source>
-        <news>v3.2.1 (2023-07-09)
-            - fix episode sorting
+        <news>v3.2.2 (2023-07-09)
+            - update episode name
         </news>
         <assets>
             <icon>resources/icon.png</icon>

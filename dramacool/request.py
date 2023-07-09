@@ -101,9 +101,10 @@ class Request(object):
 
     @classmethod
     def drama_detail_episode(cls, path):
-        doc = BeautifulSoup(cls.get(path), 'html.parser', parse_only=SoupStrainer('ul', {'class': 'list-episode-item-2 all-episode'}))
-        for a in doc.find_all('a'):
-            yield a.attrs['href'], "[{}] {}".format(a.find('span', {'class': 'type'}).text, a.find('h3').text.strip()), int(maybe(search('Episode (\\d+)', a.find('h3').text)).group(1).or_else('0'))
+        doc = BeautifulSoup(cls.get(path), 'html.parser', parse_only=SoupStrainer(['h1', 'ul']))
+        title = doc.find('h1').text
+        for a in doc.find('ul', {'class': 'list-episode-item-2 all-episode'}).find_all('a'):
+            yield a.attrs['href'], "{} [{}]".format(title, a.find('span', {'class': 'type'}).text), int(maybe(search('Episode (\\d+)', a.find('h3').text)).group(1).or_else('0'))
 
     @classmethod
     def drama_list(cls, path):
