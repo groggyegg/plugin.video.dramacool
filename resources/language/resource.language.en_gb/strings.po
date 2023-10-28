@@ -293,3 +293,19 @@ msgstr ""
 msgctxt "#33722"
 msgid "Thriller"
 msgstr ""
+
+# ----------------------------------------
+# Settings
+# ----------------------------------------
+
+msgctxt "#33800"
+msgid "DramaCool"
+msgstr ""
+
+msgctxt "#33801"
+msgid "Domain 1"
+msgstr ""
+
+msgctxt "#33802"
+msgid "Domain 2"
+msgstr ""

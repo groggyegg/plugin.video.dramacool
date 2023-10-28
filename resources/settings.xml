@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+    <category label="33800">
+        <setting label="33801" type="text" id="domain1" default="watchasian.sk"/>
+        <setting label="33802" type="text" id="domain2" default="dramacool.pa"/>
+    </category>
+</settings>
