@@ -29,30 +29,27 @@ from re import compile, search
 
 from bs4 import BeautifulSoup, NavigableString, SoupStrainer
 from requests import Session
-from requests.exceptions import ConnectTimeout, SSLError
-from xbmcext import getAddonPath, getLocalizedString, urlparse
+from requests.exceptions import ConnectionError, ConnectTimeout, SSLError
+from xbmcext import getAddonPath, getLocalizedString, getSettingString, urlparse
 from xbmcext.pymaybe import maybe
 
 
-class ConnectionError(OSError):
-    pass
-
-
 class Request(object):
-    domains = 'watchasian.mx', 'dramacool.hr'
+    domains = getSettingString('domain1') or 'watchasian.sk', getSettingString('domain2') or 'dramacool.pa'
     session = Session()
     tempfile = join(getAddonPath(), 'resources/data/tempfile')
 
     @classmethod
     def get(cls, path):
         for domain in cls.domains:
-            try:
-                response = cls.session.get('https://{}{}'.format(domain, path))
+            if domain:
+                try:
+                    response = cls.session.get('https://{}{}'.format(domain, path))
 
-                if response.status_code == 200:
-                    return response.text
-            except (ConnectTimeout, SSLError):
-                pass
+                    if response.status_code == 200:
+                        return response.text
+                except (ConnectionError, ConnectTimeout, SSLError):
+                    pass
 
         raise ConnectionError(getLocalizedString(33504))
 

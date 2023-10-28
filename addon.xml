@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.dramacool" name="DramaCool" version="3.2.1" provider-name="groggyegg">
+<addon id="plugin.video.dramacool" name="DramaCool" version="3.2.3" provider-name="groggyegg">
     <requires>
         <import addon="script.module.beautifulsoup4"/>
         <import addon="script.module.peewee"/>
@@ -15,8 +15,10 @@
         <platform>all</platform>
         <license>MIT License</license>
         <source>https://github.com/groggyegg/plugin.video.dramacool</source>
-        <news>v3.2.2 (2023-07-09)
-            - update episode name
+        <news>v3.2.3 (2023-10-27)
+            - update database
+            - update domain
+            - add custom domain in settings
         </news>
         <assets>
             <icon>resources/icon.png</icon>
