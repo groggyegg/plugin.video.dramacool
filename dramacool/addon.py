@@ -334,28 +334,34 @@ def resolve_episode():
     if position >= len(servers):
         position = Dialog().select(getLocalizedString(33500), ['[COLOR orange]{}[/COLOR]'.format(server) if scrape_supported(video, '(.+)') else server
                                                                for video, server in servers])
-        resource['server'] = servers[position][1]
 
     item = ListItem(title)
     url = False
 
-    if position != -1:
-        executebuiltin('ActivateWindow(busydialognocancel)')
-        try:
-            url = resolve(servers[position][0])
+    try:
+        if position != -1:
+            executebuiltin('ActivateWindow(busydialognocancel)')
+            try:
+                url = resolve(servers[position][0])
 
-            if url:
-                RecentDrama.create(path=path)
-                item.setPath(url)
-            else:
-                Dialog().notification(getLocalizedString(33502), '')
-        finally:
-            executebuiltin('Dialog.Close(busydialognocancel)')
-    else:
+                if url:
+                    RecentDrama.create(path=path)
+                    item.setPath(url)
+                    resource['server'] = servers[position][1]
+                else:
+                    Dialog().notification(getLocalizedString(33502), '')
+            finally:
+                executebuiltin('Dialog.Close(busydialognocancel)')
+        else:
+            executebuiltin('Playlist.Clear')
+            sleep(500)
+    except Exception:
+        resource.clear()
         executebuiltin('Playlist.Clear')
         sleep(500)
-
-    plugin.setResolvedUrl(bool(url), item)
+        raise
+    finally:
+        plugin.setResolvedUrl(bool(url), item)
 
 
 def iter_pages(pages):
