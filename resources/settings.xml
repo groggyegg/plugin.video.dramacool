@@ -2,6 +2,6 @@
 <settings>
     <category label="33800">
         <setting label="33801" type="text" id="domain1" default="watchasian.sk"/>
-        <setting label="33802" type="text" id="domain2" default="dramacool.pa"/>
+        <setting label="33802" type="text" id="domain2" default="dramacool.com.pa"/>
     </category>
 </settings>

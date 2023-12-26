@@ -29,7 +29,7 @@ from operator import or_
 
 from resolveurl import resolve, scrape_supported
 from resolveurl.resolver import ResolverError
-from xbmcext import Dialog, Keyboard, ListItem, Plugin, SortMethod, executebuiltin, getLocalizedString, sleep
+from xbmcext import Dialog, Keyboard, ListItem, Plugin, SortMethod, executebuiltin, getLocalizedString, sleep, ResourceManager
 
 from database import Drama, ExternalDatabase, InternalDatabase, RecentDrama, RecentFilter
 from request import ConnectionError, Request
@@ -304,6 +304,9 @@ def star():
 
 @plugin.route('/drama-detail/{}')
 def episode_list():
+    resource = ResourceManager()
+    resource.clear()
+
     items = []
 
     for path, title, episode in Request.drama_detail_episode(plugin.getFullPath()):
@@ -319,9 +322,20 @@ def episode_list():
 
 @plugin.route('/{:re("[^.]+.html")}')
 def resolve_episode():
+    resource = ResourceManager()
     title, path, servers = Request.video(plugin.getFullPath())
-    position = Dialog().select(getLocalizedString(33500), ['[COLOR orange]{}[/COLOR]'.format(server) if scrape_supported(video, '(.+)') else server
-                                                           for video, server in servers])
+    position = len(servers)
+
+    if 'server' in resource:
+        for position, (video, server) in enumerate(servers):
+            if resource['server'] == server:
+                break
+
+    if position >= len(servers):
+        position = Dialog().select(getLocalizedString(33500), ['[COLOR orange]{}[/COLOR]'.format(server) if scrape_supported(video, '(.+)') else server
+                                                               for video, server in servers])
+        resource['server'] = servers[position][1]
+
     item = ListItem(title)
     url = False
 
