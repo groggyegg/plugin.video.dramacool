@@ -16,11 +16,5 @@ Steps to reproduce the behavior:
 2. Click on '....'
 3. See error
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
-
 **Log file**
 A link to the log file.
-
-**Additional context**
-Add any other context about the problem here.
