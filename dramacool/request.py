@@ -26,6 +26,7 @@ from __future__ import unicode_literals
 
 from os.path import join
 from re import compile, search
+from urllib.error import URLError
 
 from bs4 import BeautifulSoup, NavigableString, SoupStrainer
 from requests import Session
@@ -48,7 +49,7 @@ class Request(object):
 
                     if response.status_code == 200:
                         return response.text
-                except (ConnectionError, ConnectTimeout, SSLError):
+                except (ConnectionError, ConnectTimeout, SSLError, URLError):
                     pass
 
         raise ConnectionError(getLocalizedString(33504))

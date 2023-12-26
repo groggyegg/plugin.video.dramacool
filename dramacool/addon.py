@@ -334,7 +334,6 @@ def resolve_episode():
     if position >= len(servers):
         position = Dialog().select(getLocalizedString(33500), ['[COLOR orange]{}[/COLOR]'.format(server) if scrape_supported(video, '(.+)') else server
                                                                for video, server in servers])
-        resource['server'] = servers[position][1]
 
     item = ListItem(title)
     url = False
@@ -347,8 +346,14 @@ def resolve_episode():
             if url:
                 RecentDrama.create(path=path)
                 item.setPath(url)
+                resource['server'] = servers[position][1]
             else:
                 Dialog().notification(getLocalizedString(33502), '')
+        except Exception:
+            resource.clear()
+            executebuiltin('Playlist.Clear')
+            sleep(500)
+            raise
         finally:
             executebuiltin('Dialog.Close(busydialognocancel)')
     else:
