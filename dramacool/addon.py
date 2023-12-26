@@ -338,29 +338,30 @@ def resolve_episode():
     item = ListItem(title)
     url = False
 
-    if position != -1:
-        executebuiltin('ActivateWindow(busydialognocancel)')
-        try:
-            url = resolve(servers[position][0])
+    try:
+        if position != -1:
+            executebuiltin('ActivateWindow(busydialognocancel)')
+            try:
+                url = resolve(servers[position][0])
 
-            if url:
-                RecentDrama.create(path=path)
-                item.setPath(url)
-                resource['server'] = servers[position][1]
-            else:
-                Dialog().notification(getLocalizedString(33502), '')
-        except Exception:
-            resource.clear()
+                if url:
+                    RecentDrama.create(path=path)
+                    item.setPath(url)
+                    resource['server'] = servers[position][1]
+                else:
+                    Dialog().notification(getLocalizedString(33502), '')
+            finally:
+                executebuiltin('Dialog.Close(busydialognocancel)')
+        else:
             executebuiltin('Playlist.Clear')
             sleep(500)
-            raise
-        finally:
-            executebuiltin('Dialog.Close(busydialognocancel)')
-    else:
+    except Exception:
+        resource.clear()
         executebuiltin('Playlist.Clear')
         sleep(500)
-
-    plugin.setResolvedUrl(bool(url), item)
+        raise
+    finally:
+        plugin.setResolvedUrl(bool(url), item)
 
 
 def iter_pages(pages):
