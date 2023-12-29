@@ -145,3 +145,8 @@ class Request(object):
     def video(cls, path):
         doc = BeautifulSoup(cls.get(path), 'html.parser', parse_only=SoupStrainer('div', {'class': 'block watch-drama'}))
         return doc.find('h1').text.strip(), doc.find('a').attrs['href'], [(urlparse(li.attrs['data-video'], 'https').geturl(), li.next.strip()) for li in doc.find_all('li', {'data-video': True})]
+
+    @classmethod
+    def episode_drama_detail(cls, path):
+        doc = BeautifulSoup(cls.get(path), 'html.parser', parse_only=SoupStrainer('div', {'class': 'category'}))
+        return cls.drama_detail(doc.find('a').attrs['href'])

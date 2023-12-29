@@ -29,7 +29,7 @@ from operator import or_
 
 from resolveurl import resolve, scrape_supported
 from resolveurl.resolver import ResolverError
-from xbmcext import Dialog, Keyboard, ListItem, Plugin, SortMethod, executebuiltin, getLocalizedString, sleep, ResourceManager
+from xbmcext import Dialog, Keyboard, ListItem, Plugin, SortMethod, executebuiltin, getLocalizedString, sleep, ResourceManager, urlparse
 
 from database import Drama, ExternalDatabase, InternalDatabase, RecentDrama, RecentFilter
 from request import ConnectionError, Request
@@ -143,11 +143,11 @@ def recently_added(page):
     items = []
 
     for path, poster, title in shows:
-        item = Drama.select().where(Drama.poster == poster).get_or_none()
+        item = Drama.select().where(Drama.poster.endswith(urlparse(poster).path)).get_or_none()
         if item:
             item.setLabel(title)
         else:
-            item = Drama(title=title, poster=poster)
+            item = Drama.create(**Request.episode_drama_detail(path))
         item.setProperty('IsPlayable', 'true')
         items.append((plugin.getSerializedUrlFor(path), item, False))
 
