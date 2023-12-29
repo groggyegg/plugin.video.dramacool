@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.dramacool" name="DramaCool" version="3.2.4" provider-name="groggyegg">
+<addon id="plugin.video.dramacool" name="DramaCool" version="3.2.5" provider-name="groggyegg">
     <requires>
         <import addon="script.module.beautifulsoup4"/>
         <import addon="script.module.peewee"/>
@@ -15,9 +15,8 @@
         <platform>all</platform>
         <license>MIT License</license>
         <source>https://github.com/groggyegg/plugin.video.dramacool</source>
-        <news>v3.2.4 (2023-12-26)
-            - update database
-            - use same mirror when clicking Play from here
+        <news>v3.2.5 (2023-12-29)
+            - fix recently added to include existing drama details
         </news>
         <assets>
             <icon>icon.png</icon>
