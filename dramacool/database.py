@@ -85,7 +85,7 @@ class InternalDatabase(object):
     def create(cls):
         cls.connection.create_tables([Drama])
 
-        paths = {drama.path for drama in Drama.select().where((Drama.status == 33710) | Drama.category.is_null())}
+        paths = {drama.path for drama in Drama.select().where((Drama.status == 33710) & Drama.category.is_null(False))}
         categories = ['/category/korean-movies', '/category/japanese-movies', '/category/taiwanese-movies',
                       '/category/hong-kong-movies', '/category/chinese-movies', '/category/american-movies',
                       '/category/other-asia-movies', '/category/thailand-movies', '/category/indian-movies',
