@@ -36,7 +36,7 @@ from xbmcext.pymaybe import maybe
 
 
 class Request(object):
-    domains = getSettingString('domain1') or 'watchasian.sk', getSettingString('domain2') or 'dramacool.com.pa'
+    domains = getSettingString('domain1') or 'watchasian.sk', getSettingString('domain2')
     session = Session()
     tempfile = join(getAddonPath(), 'resources/data/tempfile')
 
