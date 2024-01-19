@@ -128,18 +128,13 @@ class Drama(InternalModel, ListItem):
 
     def __init__(self, *args, **kwargs):
         super(Drama, self).__init__(*args, **kwargs)
-        self.setLabel(kwargs['title'])
-        self.setArt({'thumb': kwargs['poster'],
-                     'poster': kwargs['poster'],
-                     'banner': kwargs['poster'],
-                     'fanart': kwargs['poster'],
-                     'clearart': kwargs['poster'],
-                     'landscape': kwargs['poster'],
-                     'icon': kwargs['poster']} if 'poster' in kwargs else {})
+        poster = 'https://asianimg.pro'.format(kwargs['poster']) if 'poster' in kwargs else None
         labels = {'season': 1}
         labels.update({label: kwargs[label] for label in ['title', 'plot', 'year', 'episode'] if label in kwargs})
         labels.update({label: getLocalizedString(kwargs[label]) for label in ['country', 'status'] if label in kwargs})
         labels.update({label: list(map(getLocalizedString, kwargs[label])) for label in ['genre'] if label in kwargs})
+        self.setLabel(kwargs['title'])
+        self.setArt({'thumb': poster, 'poster': poster, 'banner': poster, 'fanart': poster, 'clearart': poster, 'landscape': poster, 'icon': poster} if poster else {})
         self.setInfo('video', labels)
 
 

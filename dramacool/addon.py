@@ -142,12 +142,13 @@ def recently_added(page):
     shows, pages = Request.recently_added(plugin.getFullPath())
     items = []
 
-    for path, poster, title in shows:
-        item = Drama.select().where(Drama.poster.endswith(urlparse(poster).path)).get_or_none()
+    for path, poster, title, episode in shows:
+        item = Drama.select().where(Drama.poster == poster).get_or_none()
         if item:
             item.setLabel(title)
         else:
             item = Drama.create(**Request.episode_drama_detail(path))
+        item.setProperty('Episode', episode)
         item.setProperty('IsPlayable', 'true')
         items.append((plugin.getSerializedUrlFor(path), item, False))
 
@@ -239,12 +240,7 @@ def drama_list(characters, genres, statuses, years):
     if years:
         expression &= Drama.year << years
 
-    try:
-        RecentFilter.insert(path=plugin.path, title=plugin.path).on_conflict(
-            conflict_target=[RecentFilter.path], update={RecentFilter.timestamp: datetime.now()}).execute()
-    except e:
-        Dialog().notification(str(e), '')
-
+    RecentFilter.insert(path=plugin.path, title=plugin.path).on_conflict(conflict_target=[RecentFilter.path], update={RecentFilter.timestamp: datetime.now()}).execute()
     items = []
 
     for item in Drama.select().where(expression):
