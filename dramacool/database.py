@@ -128,14 +128,16 @@ class Drama(InternalModel, ListItem):
 
     def __init__(self, *args, **kwargs):
         super(Drama, self).__init__(*args, **kwargs)
-        poster = 'https://asianimg.pro'.format(kwargs['poster']) if 'poster' in kwargs else None
-        labels = {'season': 1}
-        labels.update({label: kwargs[label] for label in ['title', 'plot', 'year', 'episode'] if label in kwargs})
-        labels.update({label: getLocalizedString(kwargs[label]) for label in ['country', 'status'] if label in kwargs})
-        labels.update({label: list(map(getLocalizedString, kwargs[label])) for label in ['genre'] if label in kwargs})
+        labels = {
+            'genre': [getLocalizedString(value) for value in kwargs.get('genre') or []],
+            'year': kwargs.get('year'),
+            'episode': kwargs.get('episode'),
+            'season': 1,
+            'plot': kwargs.get('plot'),
+            'title': kwargs['title']}
         self.setLabel(kwargs['title'])
-        self.setArt({'thumb': poster, 'poster': poster, 'banner': poster, 'fanart': poster, 'clearart': poster, 'landscape': poster, 'icon': poster} if poster else {})
-        self.setInfo('video', labels)
+        self.setArt({label: 'https://asianimg.pro{}'.format(kwargs['poster']) for label in ['thumb', 'poster', 'banner', 'fanart', 'clearart', 'landscape', 'icon']} if 'poster' in kwargs else {})
+        self.setInfo('video', {label: value for label, value in labels.items() if value})
 
 
 class RecentDrama(ExternalModel):

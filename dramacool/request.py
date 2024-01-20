@@ -99,7 +99,7 @@ class Request(object):
         doc = BeautifulSoup(cls.get(path), 'html.parser', parse_only=SoupStrainer(['h1', 'ul']))
         title = doc.find('h1').text
         for a in doc.find('ul', {'class': 'list-episode-item-2 all-episode'}).find_all('a'):
-            yield a.attrs['href'], '[COLOR orange]{}[/COLOR]'.format(title) if a.find('span', {'class': 'type'}).text == 'RAW' else title, int(maybe(search('Episode (\\d+)', a.find('h3').text)).group(1).or_else('0'))
+            yield a.attrs['href'], '[{}] {}'.format(a.find('span', {'class': 'type'}).text, title), int(maybe(search('Episode (\\d+)', a.find('h3').text)).group(1).or_else('0'))
 
     @classmethod
     def drama_list(cls, path):
@@ -123,7 +123,7 @@ class Request(object):
     @classmethod
     def recently_added(cls, path):
         doc = BeautifulSoup(cls.get(path), 'html.parser', parse_only=SoupStrainer('ul', {'class': ['switch-block list-episode-item', 'pagination']}))
-        shows = [(a.attrs['href'], a.find('img').attrs['data-original'], '[COLOR orange]{}[/COLOR]'.format(a.find('h3').text) if a.find('span', {'class': 'type'}).text == 'RAW' else a.find('h3').text, int(a.find('span', {'class': 'ep'}).text.split()[1])) for a in doc.find_all('a', {'class': 'img'})]
+        shows = [(a.attrs['href'], urlparse(a.find('img').attrs['data-original']).path, '[{}] {} {}'.format(a.find('span', {'class': 'type'}).text, a.find('h3').text, a.find('span', {'class': 'ep'}).text)) for a in doc.find_all('a', {'class': 'img'})]
         pages = [(urlparse(path).path + a.attrs['href'], a.text) for a in doc.find_all('a', text=['< Previous', 'Next >'])]
         return shows, pages
 
