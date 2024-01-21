@@ -97,7 +97,9 @@ class InternalDatabase(object):
         for category in categories:
             for path in Request.drama_list(category):
                 if path not in paths:
-                    Drama.create(**Request.drama_detail(path), category=category)
+                    v = Request.drama_detail(path)
+                    v['category'] = category
+                    Drama.create(v)
 
         cls.connection.commit()
 

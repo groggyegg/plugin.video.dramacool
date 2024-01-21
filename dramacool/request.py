@@ -26,7 +26,10 @@ from __future__ import unicode_literals
 
 from os.path import join
 from re import compile, search
-from urllib.error import URLError
+try:
+  from urllib.error import URLError
+except ImportError:
+  from urllib2 import URLError
 
 from bs4 import BeautifulSoup, NavigableString, SoupStrainer
 from requests import Session
