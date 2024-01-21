@@ -34,6 +34,11 @@ from xbmcext import Dialog, Keyboard, ListItem, Plugin, SortMethod, executebuilt
 from database import Drama, ExternalDatabase, InternalDatabase, RecentDrama, RecentFilter
 from request import ConnectionError, Request
 
+try:
+    TimeoutError  # >= Python 3.3
+except NameError:
+    TimeoutError = OSError  # < Python 3.3
+
 plugin = Plugin()
 
 
@@ -219,7 +224,7 @@ def drama_filter():
         genres = dumps(items[getLocalizedString(33402)])
         statuses = dumps(items[getLocalizedString(33403)])
         years = dumps(items[getLocalizedString(33404)])
-        plugin.redirect(f'{plugin.path}/{characters}/{genres}/{statuses}/{years}')
+        plugin.redirect('{}/{}/{}/{}/{}'.format(plugin.path,characters,genres,statuses,years))
 
 
 @plugin.route('/category/{}/{characters:json}/{genres:json}/{statuses:json}/{years:json}')
