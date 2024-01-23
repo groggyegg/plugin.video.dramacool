@@ -29,7 +29,7 @@ from operator import or_
 
 from resolveurl import resolve, scrape_supported
 from resolveurl.resolver import ResolverError
-from xbmcext import Dialog, Keyboard, ListItem, Plugin, SortMethod, executebuiltin, getLocalizedString, sleep, ResourceManager, urlparse
+from xbmcext import Dialog, Keyboard, ListItem, Plugin, SortMethod, executebuiltin, getLocalizedString, sleep, ResourceManager
 
 from database import Drama, ExternalDatabase, InternalDatabase, RecentDrama, RecentFilter
 from request import ConnectionError, Request
@@ -143,7 +143,7 @@ def recently_added(page):
     items = []
 
     for path, poster, title in shows:
-        item = Drama.select().where(Drama.poster.endswith(urlparse(poster).path)).get_or_none()
+        item = Drama.select().where(Drama.poster == poster).get_or_none()
         if item:
             item.setLabel(title)
         else:
@@ -239,12 +239,7 @@ def drama_list(characters, genres, statuses, years):
     if years:
         expression &= Drama.year << years
 
-    try:
-        RecentFilter.insert(path=plugin.path, title=plugin.path).on_conflict(
-            conflict_target=[RecentFilter.path], update={RecentFilter.timestamp: datetime.now()}).execute()
-    except e:
-        Dialog().notification(str(e), '')
-
+    RecentFilter.insert(path=plugin.path, title=plugin.path).on_conflict(conflict_target=[RecentFilter.path], update={RecentFilter.timestamp: datetime.now()}).execute()
     items = []
 
     for item in Drama.select().where(expression):

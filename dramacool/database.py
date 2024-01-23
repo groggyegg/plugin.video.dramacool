@@ -128,19 +128,16 @@ class Drama(InternalModel, ListItem):
 
     def __init__(self, *args, **kwargs):
         super(Drama, self).__init__(*args, **kwargs)
+        labels = {
+            'genre': [getLocalizedString(value) for value in kwargs.get('genre') or []],
+            'year': kwargs.get('year'),
+            'episode': kwargs.get('episode'),
+            'season': 1,
+            'plot': kwargs.get('plot'),
+            'title': kwargs['title']}
         self.setLabel(kwargs['title'])
-        self.setArt({'thumb': kwargs['poster'],
-                     'poster': kwargs['poster'],
-                     'banner': kwargs['poster'],
-                     'fanart': kwargs['poster'],
-                     'clearart': kwargs['poster'],
-                     'landscape': kwargs['poster'],
-                     'icon': kwargs['poster']} if 'poster' in kwargs else {})
-        labels = {'season': 1}
-        labels.update({label: kwargs[label] for label in ['title', 'plot', 'year', 'episode'] if label in kwargs})
-        labels.update({label: getLocalizedString(kwargs[label]) for label in ['country', 'status'] if label in kwargs})
-        labels.update({label: list(map(getLocalizedString, kwargs[label])) for label in ['genre'] if label in kwargs})
-        self.setInfo('video', labels)
+        self.setArt({label: 'https://asianimg.pro{}'.format(kwargs['poster']) for label in ['thumb', 'poster', 'banner', 'fanart', 'clearart', 'landscape', 'icon']} if 'poster' in kwargs else {})
+        self.setInfo('video', {label: value for label, value in labels.items() if value})
 
 
 class RecentDrama(ExternalModel):
