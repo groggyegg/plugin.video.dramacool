@@ -29,12 +29,12 @@ from re import compile, search
 from bs4 import BeautifulSoup, NavigableString, SoupStrainer
 from requests import Session
 from requests.exceptions import ConnectionError
-from xbmcext import getLocalizedString, getSettingString, urlparse
+from xbmcext import getLocalizedString, getSetting, urlparse
 from xbmcext.pymaybe import maybe
 
 
 class Request(object):
-    domains = getSettingString('domain1') or 'watchasian.sk', getSettingString('domain2')
+    domains = getSetting('domain1') or 'watchasia.to', getSetting('domain2')
     session = Session()
 
     @classmethod
