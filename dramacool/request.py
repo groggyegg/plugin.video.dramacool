@@ -26,10 +26,7 @@ from __future__ import unicode_literals
 
 from os.path import join
 from re import compile, search
-try:
-  from urllib.error import URLError
-except ImportError:
-  from urllib2 import URLError
+from urllib.error import URLError
 
 from bs4 import BeautifulSoup, NavigableString, SoupStrainer
 from requests import Session
@@ -58,9 +55,10 @@ class Request(object):
         raise ConnectionError(getLocalizedString(33504))
 
     @classmethod
-    def drama_detail(cls, path):
+    def drama_detail(cls, path, category=None):
         doc = BeautifulSoup(cls.get(path), 'html.parser', parse_only=SoupStrainer('div', {'class': 'details'}))
         return {'path': path,
+                'category': category,
                 'poster': doc.find('img').attrs['src'],
                 'title': doc.find('h1').text.strip(),
                 'plot': ' '.join(p.text.strip() for p in doc.find_all(lambda element: element.name == 'p' and isinstance(element.next, NavigableString))),
