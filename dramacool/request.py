@@ -52,9 +52,10 @@ class Request(object):
         raise ConnectionError(getLocalizedString(33504))
 
     @classmethod
-    def drama_detail(cls, path):
+    def drama_detail(cls, path, category=None):
         doc = BeautifulSoup(cls.get(path), 'html.parser', parse_only=SoupStrainer('div', {'class': 'details'}))
         return {'path': path,
+                'category': category,
                 'poster': urlparse(doc.find('img').attrs['src']).path,
                 'title': doc.find('h1').text.strip(),
                 'plot': ' '.join(p.text.strip() for p in doc.find_all(lambda element: element.name == 'p' and isinstance(element.next, NavigableString))),

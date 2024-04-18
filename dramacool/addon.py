@@ -28,11 +28,10 @@ from json import dumps
 from operator import or_
 
 from resolveurl import resolve, scrape_supported
-from resolveurl.resolver import ResolverError
 from xbmcext import Dialog, Keyboard, ListItem, Plugin, SortMethod, executebuiltin, getLocalizedString, sleep, ResourceManager
 
 from database import Drama, ExternalDatabase, InternalDatabase, RecentDrama, RecentFilter
-from request import ConnectionError, Request
+from request import Request
 
 plugin = Plugin()
 
@@ -219,7 +218,7 @@ def drama_filter():
         genres = dumps(items[getLocalizedString(33402)])
         statuses = dumps(items[getLocalizedString(33403)])
         years = dumps(items[getLocalizedString(33404)])
-        plugin.redirect(f'{plugin.path}/{characters}/{genres}/{statuses}/{years}')
+        plugin.redirect('{}/{}/{}/{}/{}'.format(plugin.path, characters, genres, statuses, years))
 
 
 @plugin.route('/category/{}/{characters:json}/{genres:json}/{statuses:json}/{years:json}')
@@ -372,7 +371,7 @@ if __name__ == '__main__':
         ExternalDatabase.create()
         InternalDatabase.connect()
         plugin()
-    except (ConnectionError, ResolverError, TimeoutError) as e:
+    except Exception as e:
         Dialog().notification(str(e), '')
     finally:
         ExternalDatabase.close()
