@@ -28,7 +28,7 @@ from json import dumps
 from operator import or_
 
 from resolveurl import resolve, scrape_supported
-from xbmcext import Dialog, Keyboard, ListItem, Plugin, SortMethod, executebuiltin, getLocalizedString, sleep, ResourceManager
+from xbmcext import Dialog, Keyboard, ListItem, Log, Plugin, SortMethod, executebuiltin, getLocalizedString, sleep, ResourceManager
 
 from database import Drama, ExternalDatabase, InternalDatabase, RecentDrama, RecentFilter
 from request import Request
@@ -206,9 +206,9 @@ def drama_filter():
             (getLocalizedString(33709), 33709),
             (getLocalizedString(33710), 33710),
             (getLocalizedString(33711), 33711)],
-        getLocalizedString(33404): ['2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009',
-                                    '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019',
-                                    '2020', '2021', '2022', '2023', '2024']})
+        getLocalizedString(33404): reversed(['2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008',
+                                             '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017',
+                                             '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025'])})
 
     if items:
         for item in items.values():
@@ -372,6 +372,7 @@ if __name__ == '__main__':
         InternalDatabase.connect()
         plugin()
     except Exception as e:
+        Log.fatal('[plugin.video.dramacool] {}'.format(str(e)))
         Dialog().notification(str(e), '')
     finally:
         ExternalDatabase.close()
