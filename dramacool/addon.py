@@ -138,6 +138,9 @@ def rename_recently_filtered(rename):
 @plugin.route('/recently-added-movie')
 @plugin.route('/recently-added-kshow')
 def recently_added(page):
+    resource = ResourceManager()
+    resource.clear()
+
     shows, pages = Request.recently_added(plugin.getFullPath())
     items = []
 

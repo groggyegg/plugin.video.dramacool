@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.dramacool" name="DramaCool" version="3.2.9" provider-name="groggyegg">
+<addon id="plugin.video.dramacool" name="DramaCool" version="3.2.10" provider-name="groggyegg">
     <requires>
         <import addon="script.module.beautifulsoup4"/>
         <import addon="script.module.peewee"/>
@@ -15,9 +15,9 @@
         <platform>all</platform>
         <license>MIT License</license>
         <source>https://github.com/groggyegg/plugin.video.dramacool</source>
-        <news>v3.2.9 (2024-04-20)
-            - log fatal exception
-            - reverse sort order of year filter
+        <news>v3.2.10 (2024-05-04)
+            - prevent remembering of source selection in recently
+            - update db
         </news>
         <assets>
             <icon>icon.png</icon>
