@@ -26,6 +26,7 @@ from datetime import datetime
 from functools import reduce
 from json import dumps
 from operator import or_
+from re import split
 
 from resolveurl import resolve, scrape_supported
 from xbmcext import Dialog, Keyboard, ListItem, Log, Plugin, SortMethod, executebuiltin, getLocalizedString, sleep, ResourceManager
@@ -80,6 +81,31 @@ def search_type(type, keyword, page):
 
     plugin.addDirectoryItems(items)
     plugin.endOfDirectory()
+
+
+@plugin.route('/search')
+def search_drama(title, year):
+    resource = ResourceManager()
+    resource.clear()
+
+    expression = Drama.year == year
+
+    for keyword in split(r'\s|-', title):
+        expression &= Drama.title ** '%{}%'.format(keyword)
+
+    show = Drama.get_or_none(expression)
+    items = []
+
+    if show is not None:
+        for path, title, episode in Request.drama_detail_episode(show.path):
+            item = Drama(title=title, episode=episode)
+            item.setProperty('IsPlayable', 'true')
+            items.append((plugin.getSerializedUrlFor(path), item, False))
+
+    plugin.setContent('episodes')
+    plugin.addDirectoryItems(items)
+    plugin.addSortMethods(SortMethod.EPISODE)
+    plugin.endOfDirectory(cacheToDisc=False)
 
 
 @plugin.route('/recently-viewed')
